@@ -64,6 +64,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       href: "/layanan/konsultasi",
       children: [
         { label: "Konsultasi", href: "/layanan/konsultasi", desc: "Layanan tanya jawab" },
+        { label: "Persuratan Terintegrasi", href: "/layanan/persuratan-terintegrasi", desc: "Naskah dinas & disposisi digital" },
         { label: "SIUKOM", href: "https://siukom.bnpb.go.id/", desc: "Sistem Informasi Uji Kompetensi" },
         {
           label: "Portal Data JF Kebencanaan",

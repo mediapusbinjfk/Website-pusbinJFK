@@ -92,6 +92,11 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/layanan/persuratan-terintegrasi" className="text-slate-400 hover:text-[#F7941D] transition-colors">
+                    Persuratan Terintegrasi
+                  </Link>
+                </li>
+                <li>
                   <Link
                     href="https://script.google.com/macros/s/AKfycbz129kVvvjvr82HjulfmHsOv6crXkNeuEDoUKRo6jIa2qy8L-f9xtEsnTSEQsClAXI0/exec"
                     target="_blank"
