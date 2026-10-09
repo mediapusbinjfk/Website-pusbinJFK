@@ -1,0 +1,483 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* === BNPB Official Identity Colors (aligned with bnpb.go.id) === */
+    /* Primary Blue — rgb(4, 64, 133) from bnpb.go.id top bar */
+    --bnpb-blue:         #044085;
+    --bnpb-blue-mid:     #005BAA;
+    --bnpb-blue-dark:    #022d5c;
+    --bnpb-blue-light:   #ddeeff;
+    --bnpb-blue-pale:    #EFF6FF;
+
+    /* Accent Orange — BNPB brand accent */
+    --bnpb-orange:       #F7941D;
+    --bnpb-orange-dark:  #d97c08;
+    --bnpb-orange-light: #FFF7ED;
+    --bnpb-orange-pale:  #fff3e0;
+
+    /* Danger Red — BNPB alert/emergency color */
+    --bnpb-red:          #C8102E;
+    --bnpb-red-light:    #FEF2F2;
+
+    /* Neutrals */
+    --bnpb-dark:         #0f1f3d;
+    --bnpb-white:        #FFFFFF;
+    --bnpb-gray-bg:      #F4F7FB;
+    --bnpb-gray-text:    #5A6B82;
+    --bnpb-border:       #D6E4F0;
+    --bnpb-surface:      #FAFCFF;
+
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bnpb-gray-bg);
+    color: #1b2b4b;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Global Button Interaction */
+  button, 
+  [role="button"],
+  .btn {
+    transition: transform 0.15s ease-in-out, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  button:active:not(:disabled),
+  [role="button"]:active:not(:disabled),
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+
+/* === Custom Animations === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 4.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Staggered animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* === Scroll Reveal ===
+   Content is ALWAYS visible (opacity:1) by default — animation is
+   a progressive enhancement. JS adds .revealed to play entrance once.
+   data-reveal="item" children use the same keyframe but start hidden
+   until JS stagger-reveals them.
+*/
+
+/* ── Keyframes ── */
+@keyframes sr-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sr-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes sr-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes sr-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Defaults: always visible (safe fallback) ── */
+.scroll-reveal,
+.scroll-reveal-left,
+.scroll-reveal-right,
+.scroll-reveal-scale {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Stagger items: hidden until JS reveals ── */
+[data-reveal="item"] {
+  opacity: 0;
+  transform: translateY(14px);
+  /* No transition — animation handles it */
+}
+[data-reveal="item"].revealed {
+  animation: sr-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Section wrappers: play on .revealed ── */
+.scroll-reveal.revealed {
+  animation: sr-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.scroll-reveal-left.revealed {
+  animation: sr-left 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.scroll-reveal-right.revealed {
+  animation: sr-right 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.scroll-reveal-scale.revealed {
+  animation: sr-scale 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Named delays (legacy support) ── */
+.scroll-reveal.delay-1.revealed  { animation-delay: 80ms; }
+.scroll-reveal.delay-2.revealed  { animation-delay: 160ms; }
+.scroll-reveal.delay-3.revealed  { animation-delay: 240ms; }
+.scroll-reveal.delay-4.revealed  { animation-delay: 320ms; }
+
+/* ── Accessibility: instant for reduced-motion users ── */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal.revealed,
+  .scroll-reveal-left.revealed,
+  .scroll-reveal-right.revealed,
+  .scroll-reveal-scale.revealed,
+  [data-reveal="item"].revealed {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+  [data-reveal="item"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* === View Transitions API — Page Transitions ===
+   These target the React <ViewTransition> component integrated with Next.js App Router.
+   Default: subtle fade + 10px vertical slide, 350ms ease-in-out.
+   Navbar is anchored via viewTransitionName="site-header" so it does not move.
+*/
+
+/* Default crossfade for all unnamed transitions (fallback) */
+::view-transition-old(root) {
+  animation: 350ms ease-in-out both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 350ms ease-in-out both vt-fade-in;
+}
+
+/* Page content: fade + slide 10px up on enter, fade out on leave */
+::view-transition-old(.page-content) {
+  animation: 200ms ease-in both vt-fade-out;
+}
+::view-transition-new(.page-content) {
+  animation: 350ms ease-in-out 200ms both vt-fade-in;
+}
+
+/* slide-in: default class used by <ViewTransition default="slide-in"> in PageTransition */
+::view-transition-old(.slide-in) {
+  animation: 200ms ease-in both vt-fade-out;
+}
+::view-transition-new(.slide-in) {
+  animation: 350ms ease-in-out 200ms both vt-fade-in;
+}
+
+/* Keyframes */
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 -10px;
+  }
+}
+
+/* Anchor the navbar — it should never move during page transitions */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 200;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Allow clicks through the transition overlay so fast users aren't blocked */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Legacy CSS animation for .page-transition class (fallback for non-VT browsers) */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: pageEnter 0.35s ease-in-out both;
+}
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+  .page-transition {
+    animation: none;
+  }
+}
+
+/* === animate-fade-in === */
+@keyframes fadeInSub {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.animate-fade-in {
+  animation: fadeInSub 0.25s ease forwards;
+}
+
+/* === Institutional Card Styling (BNPB-aligned) === */
+.bnpb-card {
+  background: var(--bnpb-surface);
+  border-radius: 1rem;
+  border: 1px solid var(--bnpb-border);
+  box-shadow: 0 2px 8px rgba(4, 64, 133, 0.06), 0 1px 2px rgba(0,0,0,0.03);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bnpb-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 32px -6px rgba(4, 64, 133, 0.14), 0 4px 12px -2px rgba(0,0,0,0.06);
+  border-color: var(--bnpb-orange);
+}
+
+/* Image zoom on hover inside cards */
+.bnpb-card .card-image img {
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bnpb-card:hover .card-image img {
+  transform: scale(1.07);
+}
+
+/* === Gradient Utilities (BNPB official palette) === */
+.bnpb-gradient-header {
+  background: linear-gradient(135deg, #044085 0%, #022d5c 100%);
+}
+
+.bnpb-gradient-orange {
+  background: linear-gradient(135deg, var(--bnpb-orange) 0%, var(--bnpb-orange-dark) 100%);
+}
+
+.bnpb-gradient-hero {
+  background: linear-gradient(to right, rgba(2,20,60,0.92) 0%, rgba(4,64,133,0.65) 55%, rgba(4,64,133,0.20) 100%);
+}
+
+.bnpb-gradient-section {
+  background: linear-gradient(180deg, #EFF6FF 0%, #F4F7FB 100%);
+}
+
+/* === Interactive Link Underline === */
+.bnpb-link {
+  position: relative;
+  color: var(--bnpb-blue);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+.bnpb-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--bnpb-orange);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 2px;
+}
+.bnpb-link:hover { color: var(--bnpb-orange); }
+.bnpb-link:hover::after { width: 100%; }
+
+/* === Badge === */
+.bnpb-badge-blue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--bnpb-blue-pale);
+  color: var(--bnpb-blue);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bnpb-badge-orange {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: var(--bnpb-orange-pale);
+  color: var(--bnpb-orange-dark);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* === Accent divider === */
+.bnpb-divider {
+  height: 3px;
+  width: 48px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bnpb-blue) 0%, var(--bnpb-orange) 100%);
+  margin-bottom: 1rem;
+}
+
+/* === Custom Scrollbar === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bnpb-blue);
+}
+
+/* === Selection Color === */
+::selection {
+  background-color: var(--bnpb-orange);
+  color: white;
+}
+
+/* === Focus Ring === */
+*:focus-visible {
+  outline: 2px solid var(--bnpb-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* === Logo Float Animation === */
+@keyframes logoFloat {
+  0%   { transform: translateY(0px) scale(1); }
+  50%  { transform: translateY(-10px) scale(1.02); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
