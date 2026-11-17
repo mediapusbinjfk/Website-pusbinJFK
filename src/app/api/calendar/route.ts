@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { 
   getGoogleEvents, 
   createGoogleEvent, 
@@ -7,9 +7,10 @@ import {
   syncScheduleToGoogle,
   type SyncSchedulePayload 
 } from "@/lib/googleCalendar";
+import { verifyAdminSession } from "@/lib/auth";
 
-// GET /api/calendar?timeMin=...&timeMax=...
-export async function GET(request: Request) {
+// GET /api/calendar?timeMin=...&timeMax=... (Dapat diakses untuk view jadwal)
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const timeMin = searchParams.get("timeMin") ?? undefined;
@@ -26,9 +27,17 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/calendar -> create/sync a single schedule to Google Calendar
-export async function POST(request: Request) {
+// POST /api/calendar -> create/sync a single schedule to Google Calendar (Admin only)
+export async function POST(request: NextRequest) {
   try {
+    const session = verifyAdminSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak: Autentikasi admin diperlukan." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     // If it is a full schedule payload
@@ -40,9 +49,9 @@ export async function POST(request: Request) {
     // Direct event creation
     if (body.summary && body.startDateTime && body.endDateTime) {
       const created = await createGoogleEvent({
-        summary: body.summary,
-        description: body.description,
-        location: body.location,
+        summary: String(body.summary).slice(0, 200),
+        description: body.description ? String(body.description).slice(0, 2000) : undefined,
+        location: body.location ? String(body.location).slice(0, 200) : undefined,
         startDateTime: body.startDateTime,
         endDateTime: body.endDateTime,
       });
@@ -62,9 +71,17 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT /api/calendar -> update an event
-export async function PUT(request: Request) {
+// PUT /api/calendar -> update an event (Admin only)
+export async function PUT(request: NextRequest) {
   try {
+    const session = verifyAdminSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak: Autentikasi admin diperlukan." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     if (!body.eventId) {
       return NextResponse.json(
@@ -74,9 +91,9 @@ export async function PUT(request: Request) {
     }
 
     await updateGoogleEvent(body.eventId, {
-      summary: body.summary,
-      description: body.description,
-      location: body.location,
+      summary: String(body.summary || "").slice(0, 200),
+      description: body.description ? String(body.description).slice(0, 2000) : undefined,
+      location: body.location ? String(body.location).slice(0, 200) : undefined,
       startDateTime: body.startDateTime,
       endDateTime: body.endDateTime,
     });
@@ -91,9 +108,17 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE /api/calendar?eventId=...
-export async function DELETE(request: Request) {
+// DELETE /api/calendar?eventId=... (Admin only)
+export async function DELETE(request: NextRequest) {
   try {
+    const session = verifyAdminSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak: Autentikasi admin diperlukan." },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
 

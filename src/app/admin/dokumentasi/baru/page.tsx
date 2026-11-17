@@ -102,44 +102,78 @@ export default function AdminDokumentasiBaruPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.title.trim()) {
+      alert("Judul publikasi wajib diisi.");
+      return;
+    }
+
     setSaving(true);
 
     try {
-      // Simpan data ke store Zustand agar langsung ter-update di UI
-      const newDoc = {
-        id: `DOK-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`,
-        title: form.title || "Tanpa Judul",
-        date: form.date || new Date().toISOString().split("T")[0],
-        location: form.location || "-",
-        category: form.category || "Lainnya",
-        photoCount: photos.length,
-        status: form.status,
-        createdBy: "Admin",
-        createdAt: new Date().toISOString().split("T")[0],
-        content: form.description,
-      };
+      const formData = new FormData();
+      formData.append("title", form.title.trim());
+      formData.append("date", form.date || new Date().toISOString().split("T")[0]);
+      formData.append("location", form.location.trim() || "-");
+      formData.append("category", form.category || "Lainnya");
+      formData.append("description", form.description.trim());
+      formData.append("status", form.status);
 
-      addDoc(newDoc);
-      addAktivitas({
-        id: newDoc.id,
-        title: newDoc.title,
-        category: newDoc.category,
-        date: newDoc.date,
-        location: newDoc.location,
-        description: newDoc.content,
-        image: photos[0]?.previewUrl || "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80",
-        participantsCount: 0,
-        organizer: "Unit Pembina JF BNPB",
-        status: newDoc.status === "draft" ? "Akan Datang" : "Selesai",
-        photoCount: newDoc.photoCount,
-        createdAt: newDoc.createdAt,
+      // Attach photos and find thumbnail index
+      let thumbIndex = -1;
+      photos.forEach((photo, idx) => {
+        formData.append("photos", photo.file);
+        formData.append(`caption_${idx}`, photo.caption || "");
+        if (photo.isThumb) {
+          thumbIndex = idx;
+        }
+      });
+      formData.append("thumbIndex", thumbIndex.toString());
+
+      const res = await fetch("/api/admin/dokumentasi", {
+        method: "POST",
+        body: formData,
       });
 
-      await new Promise((r) => setTimeout(r, 1000)); // simulasi loading
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Gagal menyimpan data publikasi.");
+      }
+
+      const savedItem = json.data;
+
+      // Update state local store
+      addDoc({
+        id: savedItem.id,
+        title: savedItem.title,
+        date: savedItem.date,
+        location: savedItem.location,
+        category: savedItem.category,
+        photoCount: savedItem.photoCount,
+        status: savedItem.status,
+        createdBy: savedItem.createdBy,
+        createdAt: savedItem.createdAt,
+        content: savedItem.description,
+      });
+
+      addAktivitas({
+        id: savedItem.id,
+        title: savedItem.title,
+        category: savedItem.category,
+        date: savedItem.date,
+        location: savedItem.location,
+        description: savedItem.description,
+        image: savedItem.thumbnailUrl,
+        participantsCount: 0,
+        organizer: "Unit Pembina JF BNPB",
+        status: savedItem.status === "draft" ? "Akan Datang" : "Selesai",
+        photoCount: savedItem.photoCount,
+        createdAt: savedItem.createdAt,
+      });
+
       setSaved(true);
-      setTimeout(() => router.push("/admin/dokumentasi"), 1000);
-    } catch {
-      alert("Terjadi kesalahan saat menyimpan.");
+      setTimeout(() => router.push("/admin/dokumentasi"), 800);
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat menyimpan publikasi.");
     } finally {
       setSaving(false);
     }
@@ -152,8 +186,8 @@ export default function AdminDokumentasiBaruPage() {
           <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800">Dokumentasi Berhasil Disimpan!</h3>
-          <p className="text-sm text-slate-500 mt-2">Mengalihkan ke daftar dokumentasi...</p>
+          <h3 className="text-lg font-bold text-slate-800">Publikasi Berhasil Disimpan!</h3>
+          <p className="text-sm text-slate-500 mt-2">Mengalihkan ke daftar publikasi...</p>
         </div>
       </AdminLayout>
     );
@@ -171,7 +205,7 @@ export default function AdminDokumentasiBaruPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Tambah Dokumentasi Kegiatan</h2>
+            <h2 className="text-xl font-bold text-slate-800">Tambah Publikasi</h2>
             <p className="text-sm text-slate-500">Isi informasi kegiatan dan unggah foto</p>
           </div>
         </div>
@@ -416,7 +450,7 @@ export default function AdminDokumentasiBaruPage() {
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  Simpan Dokumentasi
+                  Simpan Publikasi
                 </>
               )}
             </button>

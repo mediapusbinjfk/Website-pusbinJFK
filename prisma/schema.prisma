@@ -1,0 +1,103 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// CONTOH TABEL: Pengajuan Konsultasi & Layanan
+// ==========================================
+model Consultation {
+  id                 String   @id @default(uuid())
+  name               String
+  whatsapp           String
+  email              String?
+  institution        String
+  position           String
+  consultationMethod String   @map("consultation_method")
+  topic              String
+  notes              String?
+  estimatedDate      DateTime @map("estimated_date")
+  estimatedTime      String?  @map("estimated_time")
+  status             String   @default("menunggu")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("consultations")
+}
+
+// ==========================================
+// CONTOH TABEL: Pengajuan Naskah Dinas / Surat
+// ==========================================
+model PengajuanSurat {
+  id           String   @id @default(uuid())
+  nomorSurat   String?  @map("nomor_surat")
+  perihal      String
+  pengajuNama  String   @map("pengaju_nama")
+  pengajuEmail String?  @map("pengaju_email")
+  unitKerja    String?  @map("unit_kerja")
+  status       String   @default("pending")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("pengajuan_surat")
+}
+
+// ==========================================
+// TABEL: Produk Hukum & Bahan Regulasi
+// ==========================================
+model ProdukHukum {
+  id             String   @id @default(uuid())
+  title          String
+  documentNumber String?  @map("document_number")
+  type           String   // Peraturan, Keputusan, Surat Edaran, Pedoman, dll.
+  year           Int
+  documentDate   String?  @map("document_date")
+  description    String?
+  fileName       String?  @map("file_name")
+  fileSize       String?  @map("file_size")
+  fileUrl        String   @map("file_url")
+  status         String   @default("published") // published, draft, archived
+  createdBy      String?  @default("Admin") @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("produk_hukum")
+}
+
+// ==========================================
+// TABEL: Dokumentasi Kegiatan
+// ==========================================
+model DokumentasiKegiatan {
+  id           String            @id @default(uuid())
+  title        String
+  date         String
+  location     String?
+  category     String
+  description  String?
+  thumbnailUrl String?           @map("thumbnail_url")
+  status       String            @default("published")
+  createdBy    String?           @default("Admin") @map("created_by")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  photos       DokumentasiFoto[]
+
+  @@map("dokumentasi_kegiatan")
+}
+
+model DokumentasiFoto {
+  id         String              @id @default(uuid())
+  kegiatanId String              @map("kegiatan_id")
+  kegiatan   DokumentasiKegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  isThumb    Boolean             @default(false) @map("is_thumb")
+  order      Int                 @default(0)
+  createdAt  DateTime            @default(now()) @map("created_at")
+
+  @@map("dokumentasi_foto")
+}

@@ -48,7 +48,7 @@ const TIMELINE_DATA: TimelineEvent[] = [
     category: "Inisiasi",
     phaseTitle: "Tahap I: Arah Reformasi Birokrasi",
     title: "Arahan Presiden RI Mengenai Penyederhanaan Birokrasi",
-    legalRef: "Pidato Pelantikan Presiden RI Periode 2019–2024",
+    legalRef: "Pidato Pelantikan Presiden RI Periode 2019-2024",
     shortDesc: "Arah transformasi birokrasi ASN dari struktural kaku beralih ke jabatan fungsional berbasis keahlian teknis.",
     policyContext:
       "Dalam pidato pelantikan Presiden Joko Widodo pada 20 Oktober 2019, pemerintah menetapkan prioritas pemangkasan eselonisasi birokrasi menjadi hanya dua tingkat. ASN diarahkan bertransformasi ke jabatan fungsional yang menghargai kompetensi teknis profesional guna mewujudkan tata kelola birokrasi yang lincah, adaptif, dan responsif terhadap dinamika lapangan.",
@@ -453,7 +453,7 @@ export default function SejarahPage() {
                               Dokumen rujukan ini telah tersimpan dalam basis data repositori regulasi kepegawaian institusi. Pejabat fungsional dapat mengunduh dokumen salinan otentik melalui portal Produk Hukum.
                             </p>
                             <Link
-                              href="/produk-hukum"
+                              href="/layanan/produk-hukum"
                               className="inline-flex items-center gap-1.5 font-bold text-[#005BAA] hover:underline pt-1"
                             >
                               <span>Buka Arsip Produk Hukum Regulasi</span>

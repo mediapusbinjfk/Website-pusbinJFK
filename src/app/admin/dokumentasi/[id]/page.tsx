@@ -46,13 +46,23 @@ export default function DetailDokumentasiPage({ params: paramsPromise }: { param
       });
       return;
     }
-    if (docs[0]) setDoc(docs[0]);
+    setDoc(null);
   }, [params.id, docs, aktivitas]);
 
   if (!doc) {
     return (
       <AdminLayout>
-        <div className="p-8 text-center text-slate-500">Memuat data dokumentasi...</div>
+        <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
+          <ImageIcon className="w-12 h-12 mx-auto text-slate-300" />
+          <h2 className="text-lg font-bold text-slate-700">Publikasi Tidak Ditemukan</h2>
+          <p className="text-sm text-slate-500">Data publikasi dengan ID tersebut belum tersedia atau telah dihapus.</p>
+          <Link
+            href="/admin/dokumentasi"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#005BAA] text-white text-sm font-semibold rounded-xl hover:bg-[#004B8C] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Publikasi
+          </Link>
+        </div>
       </AdminLayout>
     );
   }
@@ -73,7 +83,7 @@ export default function DetailDokumentasiPage({ params: paramsPromise }: { param
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-900">Detail Dokumentasi</h1>
+                <h1 className="text-lg font-bold text-slate-900">Detail Publikasi</h1>
                 <span className="font-mono text-xs font-bold text-[#005BAA] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">
                   {doc.id}
                 </span>
@@ -164,7 +174,7 @@ export default function DetailDokumentasiPage({ params: paramsPromise }: { param
               </h3>
               <div className="space-y-3">
                 <div>
-                  <p className="text-[11px] text-slate-400 mb-0.5">ID Dokumentasi</p>
+                  <p className="text-[11px] text-slate-400 mb-0.5">ID Publikasi</p>
                   <p className="text-sm font-semibold text-slate-800">{doc.id}</p>
                 </div>
                 <div>

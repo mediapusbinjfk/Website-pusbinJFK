@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+scratch/
 
 # next.js
 /.next/
@@ -41,8 +42,8 @@ yarn-error.log*
 next-env.d.ts
 
 # Google Service Account (JANGAN di-commit!)
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!eslint.config.mjs
+platinum-hour-*.json
+*service-account*.json
+*credentials*.json
+!src/data/*.json
+!skills-lock.json

@@ -150,8 +150,8 @@ export default function AdminDokumentasiEditPage({ params: paramsPromise }: { pa
           <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800">Dokumentasi Berhasil Disimpan!</h3>
-          <p className="text-sm text-slate-500 mt-2">Mengalihkan ke daftar dokumentasi...</p>
+          <h3 className="text-lg font-bold text-slate-800">Publikasi Berhasil Disimpan!</h3>
+          <p className="text-sm text-slate-500 mt-2">Mengalihkan ke daftar publikasi...</p>
         </div>
       </AdminLayout>
     );
@@ -169,7 +169,7 @@ export default function AdminDokumentasiEditPage({ params: paramsPromise }: { pa
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Edit Dokumentasi Kegiatan</h2>
+            <h2 className="text-xl font-bold text-slate-800">Edit Publikasi</h2>
             <p className="text-sm text-slate-500">Perbarui informasi kegiatan {docToEdit?.id}</p>
           </div>
         </div>
@@ -414,7 +414,7 @@ export default function AdminDokumentasiEditPage({ params: paramsPromise }: { pa
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  Simpan Dokumentasi
+                  Simpan Publikasi
                 </>
               )}
             </button>

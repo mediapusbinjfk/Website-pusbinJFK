@@ -52,12 +52,12 @@ export function formatScheduleEmailContent(payload: EmailDispatchPayload): {
   body: string;
 } {
   const methodLabel = payload.method === "online" ? "Daring / Online (Zoom Meeting)" : "Luring / Tatap Muka di Graha BNPB Lt. 8";
-  const detailLabel = payload.method === "online" 
+  const detailLabel = payload.method === "online"
     ? `Tautan Zoom      : ${payload.locationOrZoom}`
     : `Lokasi Pertemuan : ${payload.locationOrZoom}`;
 
   const subject = `[JF BNPB] Konfirmasi Persetujuan Jadwal Konsultasi - ${payload.scheduleId}`;
-  
+
   const body = `Yth. Bapak/Ibu ${payload.applicantName},
 
 Semoga Bapak/Ibu senantiasa dalam keadaan sehat dan dilancarkan dalam menjalankan seluruh tugas kedinasan.
@@ -77,7 +77,7 @@ Demi kelancaran dan ketepatan waktu konsultasi, kami mengimbau Bapak/Ibu berkena
 
 Apabila Bapak/Ibu memerlukan koordinasi atau informasi lebih lanjut, silakan menghubungi Tim Helpdesk Pembinaan JF Kebencanaan BNPB melalui:
 - Surel (Email) : PusbinJFKebencanaan@bnpb.go.id
-- Telepon       : (021) 2982 7793 / 117
+- Telepon       : 085111380175 / 117
 - Lokasi        : Gedung Graha BNPB Lt. 8, Jl. Pramuka No. 38, Matraman, Jakarta Timur
 
 Demikian pemberitahuan ini kami sampaikan. Atas perhatian, kerja sama, dan dedikasi Bapak/Ibu, kami mengucapkan terima kasih.
@@ -97,7 +97,7 @@ export function formatRescheduleEmailContent(payload: RescheduleEmailDispatchPay
   body: string;
 } {
   const methodLabel = payload.method === "online" ? "Daring / Online (Zoom Meeting)" : "Luring / Tatap Muka di Graha BNPB Lt. 8";
-  const detailLabel = payload.method === "online" 
+  const detailLabel = payload.method === "online"
     ? `Tautan Zoom      : ${payload.locationOrZoom}`
     : `Lokasi Pertemuan : ${payload.locationOrZoom}`;
 
@@ -128,7 +128,7 @@ Kami memohon kesediaan Bapak/Ibu untuk menyesuaikan agenda dengan jadwal terbaru
 
 Apabila terdapat pertanyaan atau kendala terkait jadwal baru ini, Bapak/Ibu dapat menghubungi kami melalui:
 - Surel (Email) : PusbinJFKebencanaan@bnpb.go.id
-- Telepon       : (021) 2982 7793 / 117
+- Telepon       : 085111380175 / 117
 - Lokasi        : Gedung Graha BNPB Lt. 8, Jl. Pramuka No. 38, Matraman, Jakarta Timur
 
 Atas pengertian, kerja sama, dan kelapangan hati Bapak/Ibu, kami mengucapkan terima kasih.
@@ -166,7 +166,7 @@ Kami memohon maaf atas kendala maupun ketidaknyamanan yang terjadi. Apabila Bapa
 
 Untuk bantuan atau konfirmasi lebih lanjut, Bapak/Ibu dapat menghubungi kami melalui:
 - Surel (Email) : PusbinJFKebencanaan@bnpb.go.id
-- Telepon       : (021) 2982 7793 / 117
+- Telepon       : 085111380175 / 117
 - Lokasi        : Gedung Graha BNPB Lt. 8, Jl. Pramuka No. 38, Matraman, Jakarta Timur
 
 Demikian pemberitahuan ini kami sampaikan. Atas perhatian dan pengertian Bapak/Ibu, kami mengucapkan terima kasih.
@@ -191,10 +191,10 @@ async function dispatchEmail(to: string, subject: string, body: string): Promise
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          to: to || "pegawai@instansi.go.id", 
-          subject, 
-          body 
+        body: JSON.stringify({
+          to: to || "pegawai@instansi.go.id",
+          subject,
+          body
         })
       });
     } catch (error) {

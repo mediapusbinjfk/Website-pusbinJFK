@@ -35,7 +35,32 @@ export default function AdminPengajuanPage() {
   const [zoomLink, setZoomLink] = useState("https://zoom.us/j/9876543210");
   const [savingSchedule, setSavingSchedule] = useState(false);
 
-  const loadData = () => {
+  const loadData = async () => {
+    try {
+      const res = await fetch("/api/consultations");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const mapped: Consultation[] = json.data.map((c: any) => ({
+          id: c.id,
+          createdAt: c.createdAt,
+          name: c.name,
+          whatsapp: c.whatsapp,
+          email: c.email || "-",
+          institution: c.institution,
+          position: c.position,
+          topic: c.topic,
+          notes: c.notes || "",
+          status: c.status as ConsultationStatus,
+          method: c.consultationMethod === "zoom" ? "zoom" : "tatap-muka",
+          estimatedDate: c.estimatedDate ? c.estimatedDate.split("T")[0] : "",
+          estimatedTime: c.estimatedTime || "",
+        }));
+        setConsultations(mapped);
+        return;
+      }
+    } catch (e) {
+      console.warn("Using local fallback for consultations:", e);
+    }
     setConsultations(ConsultationStore.getConsultations());
   };
 

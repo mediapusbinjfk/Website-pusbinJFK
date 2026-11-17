@@ -3,26 +3,70 @@
 import React from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { Calendar, MapPin, ArrowRight, Search, X } from "lucide-react";
+import { Calendar, MapPin, ArrowRight, Search, X, ImageIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useAktivitasStore, type Aktivitas } from "@/lib/aktivitasStore";
 
 
 export default function DokumentasiKegiatanPage() {
-  const { aktivitas } = useAktivitasStore();
+  const [items, setItems] = React.useState<Aktivitas[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState("");
   const [selectedActivity, setSelectedActivity] = React.useState<Aktivitas | null>(null);
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/dokumentasi");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const mapped: Aktivitas[] = json.data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            category: d.category,
+            date: d.date,
+            location: d.location,
+            description: d.description,
+            image: d.thumbnailUrl,
+            participantsCount: 0,
+            organizer: "Unit Pembina JF BNPB",
+            status: d.status === "draft" ? "Akan Datang" : "Selesai",
+            photoCount: d.photoCount,
+            createdAt: d.createdAt,
+          }));
+          setItems(mapped);
+        }
+      } catch (err) {
+        console.error("Gagal memuat publikasi:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const filteredItems = items.filter((act) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      act.title.toLowerCase().includes(q) ||
+      act.location.toLowerCase().includes(q) ||
+      act.category.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <PageTransition>
       <div className="w-full">
         <PageHeader
-          title="Dokumentasi Kegiatan (contoh/on progress)"
-          description="Galeri foto dan rekaman aktivitas kegiatan resmi Jabatan Fungsional BNPB. (contoh/on progress)"
+          title="Publikasi"
+          description="Galeri foto, publikasi, dan rekaman aktivitas kegiatan resmi Jabatan Fungsional BNPB."
           breadcrumbs={[
             { label: "Beranda", href: "/" },
             { label: "Informasi Publik" },
-            { label: "Dokumentasi Kegiatan", href: "/informasi-publik/dokumentasi-kegiatan" },
+            { label: "Publikasi", href: "/informasi-publik/dokumentasi-kegiatan" },
           ]}
         />
 
@@ -33,74 +77,86 @@ export default function DokumentasiKegiatanPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Cari dokumentasi kegiatan..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari publikasi..."
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] transition-all text-sm bg-white"
               />
             </div>
             <p className="text-sm text-slate-500 shrink-0">
-              <span className="font-semibold text-slate-800">{aktivitas.length}</span> kegiatan terdokumentasi
+              <span className="font-semibold text-slate-800">{filteredItems.length}</span> publikasi
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {aktivitas.map((act) => (
-              <Card
-                key={act.id}
-                hoverable
-                className="flex flex-col overflow-hidden border border-slate-200 shadow-sm group cursor-pointer"
-              >
-                {/* Image */}
-                <div className="relative h-52 w-full bg-slate-100 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={act.image}
-                    alt={act.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-[#005BAA] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
-                      {act.category}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-white">
-                  <div className="space-y-2.5">
-                    <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#F7941D]" />
-                        {formatDate(act.date)}
+          {filteredItems.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-lg mx-auto shadow-sm">
+              <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+              <h3 className="text-base font-bold text-slate-700">Belum Ada Publikasi</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Galeri foto dan rekaman kegiatan resmi JF BNPB saat ini sedang dalam proses pembaharuan.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((act) => (
+                <Card
+                  key={act.id}
+                  hoverable
+                  className="flex flex-col overflow-hidden border border-slate-200 shadow-sm group cursor-pointer"
+                >
+                  {/* Image */}
+                  <div className="relative h-52 w-full bg-slate-100 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={act.image}
+                      alt={act.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-[#005BAA] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                        {act.category}
                       </span>
                     </div>
+                  </div>
 
-                    <h3 className="text-base font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#005BAA] transition-colors">
-                      {act.title}
-                    </h3>
+                  {/* Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-white">
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-[#F7941D]" />
+                          {formatDate(act.date)}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="line-clamp-1">{act.location}</span>
+                      <h3 className="text-base font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#005BAA] transition-colors">
+                        {act.title}
+                      </h3>
+
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span className="line-clamp-1">{act.location}</span>
+                      </div>
+
+                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                        {act.description}
+                      </p>
                     </div>
 
-                    <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
-                      {act.description}
-                    </p>
+                    <div className="pt-3 border-t border-slate-100">
+                      <button 
+                        onClick={() => setSelectedActivity(act)}
+                        className="text-sm font-semibold text-[#005BAA] hover:text-[#003F7D] flex items-center gap-2 group/btn transition-colors"
+                      >
+                        Lihat Detail
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="pt-3 border-t border-slate-100">
-                    <button 
-                      onClick={() => setSelectedActivity(act)}
-                      className="text-sm font-semibold text-[#005BAA] hover:text-[#003F7D] flex items-center gap-2 group/btn transition-colors"
-                    >
-                      Lihat Detail
-                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

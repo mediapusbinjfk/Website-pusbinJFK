@@ -39,10 +39,18 @@ const VIEW_MODES: { key: ViewMode; icon: React.ReactNode; label: string }[] = [
   { key: "grid-lg", icon: <Grid2X2 className="w-4 h-4" />,      label: "Grid Besar" },
 ];
 
+function DocSortIcon({ field, currentField, sortDir }: { field: SortField; currentField: SortField; sortDir: SortDir }) {
+  if (currentField !== field) return <ChevronUp className="w-3 h-3 text-slate-300" />;
+  return sortDir === "asc"
+    ? <ChevronUp className="w-3 h-3 text-[#005BAA]" />
+    : <ChevronDown className="w-3 h-3 text-[#005BAA]" />;
+}
+
 export default function AdminDokumentasiPage() {
-  // useAktivitasStore = shared store → perubahan di sini langsung tampil di halaman publik
-  const { aktivitas: docs, deleteAktivitas } = useAktivitasStore();
+  const { deleteAktivitas } = useAktivitasStore();
   const { deleteDoc } = useDokumentasiStore();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("semua");
   const [sortField, setSortField] = useState<SortField>("date");
@@ -50,16 +58,60 @@ export default function AdminDokumentasiPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const handleDelete = () => {
-    if (deleteId) {
-      deleteAktivitas(deleteId); // ← hapus dari shared store, otomatis sinkron ke halaman publik
-      deleteDoc(deleteId);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/dokumentasi");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setItems(
+          json.data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            category: d.category,
+            date: d.date,
+            location: d.location,
+            description: d.description,
+            image: d.thumbnailUrl,
+            status: d.status,
+            photoCount: d.photoCount || 1,
+            createdAt: d.createdAt,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Gagal memuat dokumentasi admin:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      const res = await fetch(`/api/admin/dokumentasi/${deleteId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setItems((prev) => prev.filter((item) => item.id !== deleteId));
+        deleteAktivitas(deleteId);
+        deleteDoc(deleteId);
+      } else {
+        alert("Gagal menghapus data dokumentasi.");
+      }
+    } catch {
+      alert("Terjadi kesalahan koneksi saat menghapus.");
+    } finally {
       setDeleteId(null);
     }
   };
 
   // Filter + sort
-  const filtered = docs
+  const filtered = items
     .filter((d) => {
       const matchSearch =
         d.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -79,22 +131,15 @@ export default function AdminDokumentasiPage() {
     else { setSortField(field); setSortDir("desc"); }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ChevronUp className="w-3 h-3 text-slate-300" />;
-    return sortDir === "asc"
-      ? <ChevronUp className="w-3 h-3 text-[#005BAA]" />
-      : <ChevronDown className="w-3 h-3 text-[#005BAA]" />;
-  };
-
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Dokumentasi Kegiatan</h2>
+            <h2 className="text-xl font-bold text-slate-800">Publikasi</h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              Kelola galeri foto dan rekaman kegiatan resmi JF BNPB
+              Kelola publikasi, galeri foto, dan rekaman kegiatan resmi JF BNPB
             </p>
           </div>
           <Link
@@ -102,7 +147,7 @@ export default function AdminDokumentasiPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#005BAA] hover:bg-[#003F7D] text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            Tambah Dokumentasi
+            Tambah Publikasi
           </Link>
         </div>
 
@@ -152,7 +197,7 @@ export default function AdminDokumentasiPage() {
             </div>
           </div>
           <p className="text-xs text-slate-400 mt-3">
-            Menampilkan <span className="font-semibold text-slate-600">{filtered.length}</span> dari {docs.length} dokumentasi
+            Menampilkan <span className="font-semibold text-slate-600">{filtered.length}</span> dari {items.length} publikasi
           </p>
         </div>
 
@@ -169,13 +214,13 @@ export default function AdminDokumentasiPage() {
                       className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-700 select-none"
                       onClick={() => handleSort("title")}
                     >
-                      <div className="flex items-center gap-1">Judul <SortIcon field="title" /></div>
+                      <div className="flex items-center gap-1">Judul <DocSortIcon field="title" currentField={sortField} sortDir={sortDir} /></div>
                     </th>
                     <th
                       className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-700 select-none hidden md:table-cell"
                       onClick={() => handleSort("date")}
                     >
-                      <div className="flex items-center gap-1">Tanggal <SortIcon field="date" /></div>
+                      <div className="flex items-center gap-1">Tanggal <DocSortIcon field="date" currentField={sortField} sortDir={sortDir} /></div>
                     </th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Lokasi</th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide">Status</th>
@@ -187,7 +232,7 @@ export default function AdminDokumentasiPage() {
                     <tr>
                       <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">
                         <ImageIcon className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                        Tidak ada dokumentasi ditemukan
+                        Tidak ada publikasi ditemukan
                       </td>
                     </tr>
                   ) : (
@@ -251,7 +296,7 @@ export default function AdminDokumentasiPage() {
             {filtered.length === 0 ? (
               <div className="text-center py-16 text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
                 <ImageIcon className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                Tidak ada dokumentasi ditemukan
+                Tidak ada publikasi ditemukan
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -379,7 +424,7 @@ export default function AdminDokumentasiPage() {
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
-            <h3 className="text-base font-bold text-slate-800 text-center mb-2">Hapus Dokumentasi?</h3>
+            <h3 className="text-base font-bold text-slate-800 text-center mb-2">Hapus Publikasi?</h3>
             <p className="text-sm text-slate-500 text-center mb-6">
               Tindakan ini tidak dapat dibatalkan. Data dan foto terkait akan dihapus permanen.
             </p>

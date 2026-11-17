@@ -1,70 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
   Plus, Search, Edit2, Trash2, Eye, FileText,
   Download, ChevronUp, ChevronDown, Filter,
-  LayoutList, LayoutGrid, Grid2X2,
+  LayoutList, LayoutGrid, Grid2X2, Loader2,
+  X, RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import type { LegalProductType, LegalProductStatus } from "@/types/admin";
 
-// ============================================================
-// MOCK DATA (akan diganti dari Google Sheets)
-// ============================================================
-const mockProducts = [
-  {
-    id: "PH-001",
-    title: "Peraturan Menteri PANRB Nomor 43 Tahun 2018 Tentang Jabatan Fungsional Penata Penanggulangan Bencana",
-    documentNumber: "PermenPAN-RB 43/2018",
-    type: "Peraturan" as LegalProductType,
-    year: 2018,
-    fileSize: "2.4 MB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-10",
-  },
-  {
-    id: "PH-002",
-    title: "Peraturan BNPB Nomor 4 Tahun 2019 Tentang Petunjuk Pelaksanaan Jabatan Fungsional",
-    documentNumber: "Perkepala BNPB 4/2019",
-    type: "Peraturan" as LegalProductType,
-    year: 2019,
-    fileSize: "1.8 MB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-10",
-  },
-  {
-    id: "PH-003",
-    title: "Keputusan Kepala BNPB Nomor 12A Tahun 2023 Tentang Penilaian Angka Kredit",
-    documentNumber: "Kepka BNPB 12A/2023",
-    type: "Keputusan" as LegalProductType,
-    year: 2023,
-    fileSize: "980 KB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-15",
-  },
-  {
-    id: "PH-004",
-    title: "Surat Edaran Nomor: SE/01/BNPB/2024 Perihal Pembinaan dan Pengembangan Karier JF",
-    documentNumber: "SE/01/BNPB/2024",
-    type: "Surat Edaran" as LegalProductType,
-    year: 2024,
-    fileSize: "450 KB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-02-20",
-  },
-  {
-    id: "PH-005",
-    title: "Pedoman Teknis Pelaksanaan Uji Kompetensi Kenaikan Jenjang 2026",
-    documentNumber: "PED-JF-01/2026",
-    type: "Pedoman" as LegalProductType,
-    year: 2026,
-    fileSize: "3.2 MB",
-    status: "draft" as LegalProductStatus,
-    createdAt: "2026-08-01",
-  },
-];
+export interface LegalProductItem {
+  id: string;
+  title: string;
+  documentNumber: string;
+  type: LegalProductType;
+  year: number;
+  fileSize: string;
+  fileUrl?: string;
+  fileName?: string;
+  status: LegalProductStatus;
+  createdAt: string;
+}
 
 const STATUS_CONFIG: Record<LegalProductStatus, { label: string; className: string }> = {
   published: { label: "Dipublikasikan", className: "bg-green-100 text-green-700" },
@@ -108,8 +66,19 @@ const VIEW_MODES: { key: ViewMode; icon: React.ReactNode; label: string }[] = [
   { key: "grid-lg", icon: <Grid2X2 className="w-4 h-4" />,      label: "Grid Besar" },
 ];
 
+function PHSortIcon({ field, currentField, sortDir }: { field: SortField; currentField: SortField; sortDir: SortDir }) {
+  if (currentField !== field) return <ChevronUp className="w-3 h-3 text-slate-300" />;
+  return sortDir === "asc"
+    ? <ChevronUp className="w-3 h-3 text-[#005BAA]" />
+    : <ChevronDown className="w-3 h-3 text-[#005BAA]" />;
+}
+
 export default function AdminProdukHukumPage() {
+  const [products, setProducts] = useState<LegalProductItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<LegalProductType | "semua">("semua");
   const [statusFilter, setStatusFilter] = useState<LegalProductStatus | "semua">("semua");
   const [yearFilter, setYearFilter] = useState<string>("semua");
@@ -117,14 +86,89 @@ export default function AdminProdukHukumPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  const years = ["semua", ...Array.from(new Set(mockProducts.map((p) => String(p.year)))).sort((a, b) => Number(b) - Number(a))];
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const filtered = mockProducts
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/produk-hukum");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setProducts(
+          json.data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            documentNumber: item.documentNumber || "-",
+            type: item.type as LegalProductType,
+            year: item.year,
+            fileSize: item.fileSize || "-",
+            fileUrl: item.fileUrl,
+            fileName: item.fileName,
+            status: item.status as LegalProductStatus,
+            createdAt: new Date(item.createdAt).toLocaleDateString("id-ID"),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Gagal mengambil data produk hukum:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/admin/produk-hukum/${deleteId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        alert(json.error || "Gagal menghapus produk hukum.");
+      } else {
+        setProducts((prev) => prev.filter((p) => p.id !== deleteId));
+      }
+    } catch {
+      alert("Terjadi kesalahan saat menghapus.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
+    }
+  };
+
+  const years = ["semua", ...Array.from(new Set(products.map((p) => String(p.year)))).sort((a, b) => Number(b) - Number(a))];
+
+  const activeFilterCount =
+    (typeFilter !== "semua" ? 1 : 0) +
+    (statusFilter !== "semua" ? 1 : 0) +
+    (yearFilter !== "semua" ? 1 : 0);
+
+  const resetFilters = () => {
+    setSearch("");
+    setTypeFilter("semua");
+    setStatusFilter("semua");
+    setYearFilter("semua");
+    searchRef.current?.focus();
+  };
+
+  const filtered = products
     .filter((p) => {
+      const q = (debouncedSearch || search).toLowerCase();
       const matchSearch =
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.documentNumber.toLowerCase().includes(search.toLowerCase());
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.documentNumber.toLowerCase().includes(q);
       const matchType = typeFilter === "semua" || p.type === typeFilter;
       const matchStatus = statusFilter === "semua" || p.status === statusFilter;
       const matchYear = yearFilter === "semua" || String(p.year) === yearFilter;
@@ -139,13 +183,6 @@ export default function AdminProdukHukumPage() {
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(sortDir === "asc" ? "desc" : "asc");
     else { setSortField(field); setSortDir("desc"); }
-  };
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ChevronUp className="w-3 h-3 text-slate-300" />;
-    return sortDir === "asc"
-      ? <ChevronUp className="w-3 h-3 text-[#005BAA]" />
-      : <ChevronDown className="w-3 h-3 text-[#005BAA]" />;
   };
 
   return (
@@ -174,19 +211,36 @@ export default function AdminProdukHukumPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
+                ref={searchRef}
                 type="text"
                 placeholder="Cari judul atau nomor dokumen..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm transition-all"
+                className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm transition-all"
               />
+              {search && (
+                <button
+                  onClick={() => { setSearch(""); searchRef.current?.focus(); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  aria-label="Hapus pencarian"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex items-center gap-1 text-slate-400">
+                <Filter className="w-4 h-4 shrink-0" />
+                {activeFilterCount > 0 && (
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#005BAA] text-white text-[10px] font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value as LegalProductType | "semua")}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white text-slate-700"
+                className={`px-3 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white transition-colors ${typeFilter !== "semua" ? "border-[#005BAA] text-[#005BAA] font-semibold" : "border-slate-200 text-slate-700"}`}
               >
                 <option value="semua">Semua Jenis</option>
                 {["Peraturan", "Keputusan", "Surat Edaran", "Pedoman", "Petunjuk Teknis", "Instruksi", "Standar", "Lainnya"].map((t) => (
@@ -196,7 +250,7 @@ export default function AdminProdukHukumPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as LegalProductStatus | "semua")}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white text-slate-700"
+                className={`px-3 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white transition-colors ${statusFilter !== "semua" ? "border-[#005BAA] text-[#005BAA] font-semibold" : "border-slate-200 text-slate-700"}`}
               >
                 <option value="semua">Semua Status</option>
                 <option value="published">Dipublikasikan</option>
@@ -206,12 +260,22 @@ export default function AdminProdukHukumPage() {
               <select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white text-slate-700"
+                className={`px-3 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#005BAA]/20 focus:border-[#005BAA] outline-none text-sm bg-white transition-colors ${yearFilter !== "semua" ? "border-[#005BAA] text-[#005BAA] font-semibold" : "border-slate-200 text-slate-700"}`}
               >
                 {years.map((y) => (
                   <option key={y} value={y}>{y === "semua" ? "Semua Tahun" : y}</option>
                 ))}
               </select>
+              {(search || activeFilterCount > 0) && (
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all"
+                  title="Reset semua filter"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+              )}
             </div>
 
             {/* VIEW MODE TOGGLE */}
@@ -233,7 +297,10 @@ export default function AdminProdukHukumPage() {
             </div>
           </div>
           <p className="text-xs text-slate-400">
-            Menampilkan <span className="font-semibold text-slate-600">{filtered.length}</span> dari {mockProducts.length} dokumen
+            Menampilkan <span className="font-semibold text-slate-600">{filtered.length}</span> dari {products.length} dokumen
+            {(search || activeFilterCount > 0) && filtered.length !== products.length && (
+              <span className="text-[#005BAA] font-semibold"> (filter aktif)</span>
+            )}
           </p>
         </div>
 
@@ -249,19 +316,19 @@ export default function AdminProdukHukumPage() {
                       className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-700"
                       onClick={() => handleSort("title")}
                     >
-                      <div className="flex items-center gap-1">Judul Dokumen <SortIcon field="title" /></div>
+                      <div className="flex items-center gap-1">Judul Dokumen <PHSortIcon field="title" currentField={sortField} sortDir={sortDir} /></div>
                     </th>
                     <th
                       className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-700"
                       onClick={() => handleSort("type")}
                     >
-                      <div className="flex items-center gap-1">Jenis <SortIcon field="type" /></div>
+                      <div className="flex items-center gap-1">Jenis <PHSortIcon field="type" currentField={sortField} sortDir={sortDir} /></div>
                     </th>
                     <th
                       className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-700 hidden md:table-cell"
                       onClick={() => handleSort("year")}
                     >
-                      <div className="flex items-center gap-1">Tahun <SortIcon field="year" /></div>
+                      <div className="flex items-center gap-1">Tahun <PHSortIcon field="year" currentField={sortField} sortDir={sortDir} /></div>
                     </th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Ukuran</th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wide">Status</th>
@@ -269,7 +336,14 @@ export default function AdminProdukHukumPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filtered.length === 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">
+                        <Loader2 className="w-8 h-8 mx-auto mb-3 text-[#005BAA] animate-spin" />
+                        Memuat data dari database Supabase...
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">
                         <FileText className="w-10 h-10 mx-auto mb-3 text-slate-200" />
@@ -312,9 +386,17 @@ export default function AdminProdukHukumPage() {
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-[#005BAA] transition-colors" title="Unduh PDF">
-                                <Download className="w-4 h-4" />
-                              </button>
+                              {doc.fileUrl && (
+                                <a
+                                  href={doc.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-[#005BAA] transition-colors"
+                                  title="Unduh / Buka Dokumen"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              )}
                               <Link href={`/admin/produk-hukum/${doc.id}`} className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-[#005BAA] transition-colors" title="Lihat detail">
                                 <Eye className="w-4 h-4" />
                               </Link>
@@ -468,21 +550,30 @@ export default function AdminProdukHukumPage() {
       {/* Delete Modal */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isDeleting && setDeleteId(null)} />
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <h3 className="text-base font-bold text-slate-800 text-center mb-2">Hapus Produk Hukum?</h3>
             <p className="text-sm text-slate-500 text-center mb-6">
-              File PDF pada Google Drive juga akan dihapus. Tindakan ini tidak dapat dibatalkan.
+              File dokumen dan data produk hukum ini akan dihapus secara permanen dari database.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
               <button
-                onClick={() => { setDeleteId(null); }}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold"
-              >Ya, Hapus</button>
+                disabled={isDeleting}
+                onClick={() => setDeleteId(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ya, Hapus"}
+              </button>
             </div>
           </div>
         </div>

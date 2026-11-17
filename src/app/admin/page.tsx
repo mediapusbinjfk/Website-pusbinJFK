@@ -28,37 +28,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ConsultationStore } from "@/lib/consultationStore";
-import type { Consultation, ConsultationSchedule } from "@/types/admin";
+import type { Consultation, ConsultationSchedule, ConsultationStatus } from "@/types/admin";
 import { AdminCalendar } from "@/components/admin/calendar/AdminCalendar";
 import {
   DateScheduleModal,
   type EnrichedSchedule,
 } from "@/components/admin/calendar/DateScheduleModal";
 import { ToastContainer, type ToastItem, type ToastType } from "@/components/ui/Toast";
-
-const mockRecentActivities = [
-  {
-    id: 1,
-    text: "Jadwal konsultasi baru otomatis terdaftar",
-    detail: "Alur langsung terintegrasi ke kalender admin",
-    time: "Baru saja",
-    icon: <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" />,
-  },
-  {
-    id: 2,
-    text: "Konsultasi berhasil dijadwalkan",
-    detail: "Dr. Hendra Gunawan - BPBD Prov. Jabar",
-    time: "1 jam lalu",
-    icon: <Users className="w-3.5 h-3.5 text-[#005BAA]" />,
-  },
-  {
-    id: 3,
-    text: "Produk Hukum baru ditambahkan",
-    detail: "Surat Edaran No. SE/03/2026",
-    time: "3 jam lalu",
-    icon: <FileText className="w-3.5 h-3.5 text-amber-600" />,
-  },
-];
 
 const STATUS_CONFIG: Record<
   string,
@@ -231,7 +207,34 @@ export default function AdminDashboardPage() {
     [removeToast]
   );
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetch("/api/consultations");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const mapped: Consultation[] = json.data.map((c: any) => ({
+          id: c.id,
+          createdAt: c.createdAt,
+          name: c.name,
+          whatsapp: c.whatsapp,
+          email: c.email || "-",
+          institution: c.institution,
+          position: c.position,
+          topic: c.topic,
+          notes: c.notes || "",
+          status: c.status as ConsultationStatus,
+          method: c.consultationMethod === "zoom" ? "zoom" : "tatap-muka",
+          estimatedDate: c.estimatedDate ? c.estimatedDate.split("T")[0] : "",
+          estimatedTime: c.estimatedTime || "",
+        }));
+        setConsultations(mapped);
+        const s = ConsultationStore.getEnrichedSchedules() as EnrichedSchedule[];
+        setEnrichedSchedules(s);
+        return;
+      }
+    } catch (err) {
+      console.warn("Using local fallback on dashboard:", err);
+    }
     const c = ConsultationStore.getConsultations();
     const s = ConsultationStore.getEnrichedSchedules() as EnrichedSchedule[];
     setConsultations(c);
@@ -266,6 +269,21 @@ export default function AdminDashboardPage() {
       .filter((s) => s.status === "aktif")
       .slice(0, 4);
   }, [enrichedSchedules]);
+
+  // Real recent activities from consultations
+  const recentActivities = useMemo(() => {
+    return consultations.slice(0, 4).map((c) => ({
+      id: c.id,
+      text: `Pengajuan dari ${c.name}`,
+      detail: `${c.institution} • ${c.topic}`,
+      time: new Date(c.createdAt).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }));
+  }, [consultations]);
 
   // Indonesian date string for today
   const todayFormatted = useMemo(() => {
@@ -589,7 +607,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                       <p className="text-xs font-extrabold text-slate-800">
-                        Dokumentasi Kegiatan
+                        Publikasi
                       </p>
                       <p className="text-[11px] text-slate-400">
                         Galeri foto & liputan berita
@@ -639,25 +657,6 @@ export default function AdminDashboardPage() {
                   <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
                 </Link>
 
-                <Link
-                  href="/admin/dokumen/surat-dinas"
-                  className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#005BAA] flex items-center justify-center border border-blue-100">
-                      <ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-extrabold text-slate-800">
-                        Tata Usaha & Dokumen
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        Surat dinas dan disposisi
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#005BAA] transition-colors" />
-                </Link>
               </div>
             </div>
 
@@ -693,11 +692,11 @@ export default function AdminDashboardPage() {
 
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="font-bold text-slate-700">Database Lokal</span>
+                    <Activity className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="font-bold text-slate-700">Database Supabase (PostgreSQL)</span>
                   </div>
-                  <span className="inline-flex items-center gap-1 font-extrabold text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
-                    Sinkron
+                  <span className="inline-flex items-center gap-1 font-extrabold text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <Check className="w-3 h-3" /> Terkoneksi
                   </span>
                 </div>
               </div>
@@ -720,27 +719,34 @@ export default function AdminDashboardPage() {
                 </Link>
               </div>
               <div className="divide-y divide-slate-100">
-                {mockRecentActivities.map((a) => (
-                  <div
-                    key={a.id}
-                    className="p-4 hover:bg-slate-50/60 transition-colors flex items-start gap-3"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                      {a.icon}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-800 leading-tight">
-                        {a.text}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {a.detail}
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                        {a.time}
-                      </p>
-                    </div>
+                {recentActivities.length === 0 ? (
+                  <div className="p-6 text-center text-slate-400 text-xs space-y-1">
+                    <p className="font-semibold text-slate-600">Belum ada pengajuan konsultasi</p>
+                    <p className="text-slate-400">Pengajuan konsultasi dari pemohon akan tercatat otomatis di sini.</p>
                   </div>
-                ))}
+                ) : (
+                  recentActivities.map((a) => (
+                    <div
+                      key={a.id}
+                      className="p-4 hover:bg-slate-50/60 transition-colors flex items-start gap-3"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#005BAA] flex items-center justify-center shrink-0 mt-0.5">
+                        <CalendarCheck className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-800 leading-tight">
+                          {a.text}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          {a.detail}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-mono">
+                          {a.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

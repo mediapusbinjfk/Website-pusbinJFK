@@ -40,7 +40,7 @@ export default function StrukturOrganisasiPage() {
                   </div>
                   <div className="text-xs font-semibold text-blue-200 uppercase tracking-wider mb-0.5">Pimpinan Lembaga</div>
                   <div className="text-base font-bold text-white">Kepala BNPB</div>
-                  <div className="text-xs text-blue-100 mt-1 font-medium">Letjen TNI (Purn.) Suharyanto, S.Sos., M.M.</div>
+                  <div className="text-xs text-blue-100 mt-1 font-medium">Mayjen TNI Kristomei Sianturi, S.Sos., M.Si</div>
                 </div>
               </div>
 

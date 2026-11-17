@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import {
   Send, User, Mail, MessageSquare, Phone, MapPin, Clock, CheckCircle,
-  Video, Building2, Briefcase, Calendar, FileText
+  Video, Building2, Briefcase, Calendar, FileText, X
 } from "lucide-react";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ConsultationStore } from "@/lib/consultationStore";
@@ -48,6 +48,8 @@ export default function KonsultasiPage() {
   const [createdResult, setCreatedResult] = useState<{
     consultationId: string;
   } | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
 
   const getMinDate = () => {
     const d = new Date();
@@ -55,38 +57,100 @@ export default function KonsultasiPage() {
     return d.toISOString().split("T")[0];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot trap: jika input rahasia diisi bot, gagalkan secara senyap
+    if (honeypot) {
+      setCreatedResult({ consultationId: `KNS-${Date.now().toString(36).toUpperCase()}` });
+      setShowSuccessPopup(true);
+      return;
+    }
 
     if (consultationMethod === "chat") {
       setCreatedResult({ consultationId: "CHAT" });
+      setShowSuccessPopup(true);
       return;
     }
 
     const slot = TIME_SLOTS.find((s) => s.id === selectedSlot) || TIME_SLOTS[0];
+    const targetDate = date || getMinDate();
+    const formattedNotes = `Umum Kepegawaian:\nNama: ${formData.umpegName || "-"}\nNomor: ${formData.umpegPhone || "-"}\n\nCatatan:\n${formData.notes}`;
 
-    // Buat konsultasi baru yang masuk antrean (menunggu)
-    const result = ConsultationStore.addConsultation({
-      name: formData.name,
-      whatsapp: formData.whatsapp,
-      email: formData.email,
-      institution: formData.institution,
-      position: formData.position,
-      topic: formData.topic || "Konsultasi Umum JF",
-      notes: `Umum Kepegawaian:\nNama: ${formData.umpegName || "-"}\nNomor: ${formData.umpegPhone || "-"}\n\nCatatan:\n${formData.notes}`,
-      method: consultationMethod === "zoom" ? "zoom" : "tatap-muka",
-      documentFileName: formData.documentFileName || undefined,
-      estimatedDate: date || getMinDate(),
-      estimatedTime: slot.label,
-    });
+    setIsSubmitting(true);
+    try {
+      // 1. Simpan langsung ke Supabase melalui REST API
+      const res = await fetch("/api/consultations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          whatsapp: formData.whatsapp,
+          email: formData.email,
+          institution: formData.institution,
+          position: formData.position,
+          topic: formData.topic || "Konsultasi Umum JF",
+          notes: formattedNotes,
+          consultationMethod: consultationMethod === "zoom" ? "zoom" : "tatap-muka",
+          estimatedDate: targetDate,
+          estimatedTime: slot.label,
+          website_url: honeypot,
+        }),
+      });
 
-    setCreatedResult({
-      consultationId: result.id,
-    });
+      const json = await res.json();
+      const serverId = json.data?.id || `KNS-${Date.now().toString(36).toUpperCase()}`;
+
+      // 2. Sinkronkan ke ConsultationStore
+      ConsultationStore.addConsultation({
+        name: formData.name,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
+        institution: formData.institution,
+        position: formData.position,
+        topic: formData.topic || "Konsultasi Umum JF",
+        notes: formattedNotes,
+        method: consultationMethod === "zoom" ? "zoom" : "tatap-muka",
+        documentFileName: formData.documentFileName || undefined,
+        estimatedDate: targetDate,
+        estimatedTime: slot.label,
+      });
+
+      setCreatedResult({
+        consultationId: serverId,
+      });
+      setShowSuccessPopup(true);
+    } catch (err) {
+      console.error("Gagal mengirim konsultasi ke server:", err);
+      // Fallback lokal jika jaringan offline
+      const result = ConsultationStore.addConsultation({
+        name: formData.name,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
+        institution: formData.institution,
+        position: formData.position,
+        topic: formData.topic || "Konsultasi Umum JF",
+        notes: formattedNotes,
+        method: consultationMethod === "zoom" ? "zoom" : "tatap-muka",
+        documentFileName: formData.documentFileName || undefined,
+        estimatedDate: targetDate,
+        estimatedTime: slot.label,
+      });
+      setCreatedResult({
+        consultationId: result.id,
+      });
+      setShowSuccessPopup(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setCreatedResult(null);
+    setShowSuccessPopup(false);
+    setHoneypot("");
     setFormData({
       name: "",
       email: "",
@@ -174,6 +238,17 @@ export default function KonsultasiPage() {
                     </div>
 
                     <form className="space-y-8" onSubmit={handleSubmit}>
+                      {/* Honeypot field perlindungan bot */}
+                      <div className="hidden" aria-hidden="true" style={{ display: "none" }}>
+                        <input
+                          type="text"
+                          name="website_url"
+                          value={honeypot}
+                          onChange={(e) => setHoneypot(e.target.value)}
+                          tabIndex={-1}
+                          autoComplete="off"
+                        />
+                      </div>
 
                       {/* STEP 1: METODE KONSULTASI */}
                       <div className="space-y-3">
@@ -492,7 +567,7 @@ export default function KonsultasiPage() {
                   </li>
                   <li className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-[#F7941D] shrink-0" />
-                    <span>(021) 2982 7793 / 117</span>
+                    <span>085111380175 / 117</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#F7941D] shrink-0" />
@@ -541,6 +616,73 @@ export default function KonsultasiPage() {
             </div>
           </div>
         </div>
+
+        {/* ============================================================ */}
+        {/* POP UP MODAL NOTIFIKASI SUKSES SETELAH KIRIM                 */}
+        {/* ============================================================ */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop dengan efek blur */}
+            <div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+              onClick={() => setShowSuccessPopup(false)}
+            />
+
+            {/* Kotak Dialog Pop Up */}
+            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 sm:p-8 text-center z-10 animate-in zoom-in-95 duration-200">
+              {/* Tombol Tutup X di pojok kanan atas */}
+              <button
+                onClick={() => setShowSuccessPopup(false)}
+                className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Tutup notifikasi"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Ikon Sukses */}
+              <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-sm ring-8 ring-emerald-50">
+                <CheckCircle className="w-8 h-8" />
+              </div>
+
+              {/* Judul & Pesan Sesuai Permintaan User */}
+              <h3 className="text-xl font-bold text-slate-900">
+                Pesan Anda Sudah Terkirim
+              </h3>
+
+              <p className="text-sm text-slate-600 leading-relaxed mt-2.5">
+                Mohon untuk cek berkala pada email Anda <span className="font-bold text-slate-900">1 x 24 jam</span> untuk menerima konfirmasi jadwal dan tautan resmi dari tim pembina JF BNPB.
+              </p>
+
+              {/* Kotak Nomor Tiket */}
+              {createdResult?.consultationId && createdResult.consultationId !== "CHAT" && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 my-4 text-xs text-slate-600">
+                  <span className="text-slate-400 block text-[11px] font-medium mb-0.5 uppercase tracking-wide">
+                    Nomor Tiket Pengajuan:
+                  </span>
+                  <span className="font-mono font-bold text-[#005BAA] text-lg tracking-wider">
+                    {createdResult.consultationId}
+                  </span>
+                  {formData.email && (
+                    <span className="block text-slate-500 mt-1 truncate">
+                      Pemberitahuan akan dikirim ke: <strong className="text-slate-700">{formData.email}</strong>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Tombol Konfirmasi */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSuccessPopup(false)}
+                  className="w-full py-3 px-5 rounded-xl font-bold text-sm text-white bg-[#005BAA] hover:bg-[#003F7D] active:scale-[0.98] transition-all shadow-md shadow-blue-900/10 cursor-pointer"
+                >
+                  Saya Mengerti
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

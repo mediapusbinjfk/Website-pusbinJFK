@@ -1,24 +1,21 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { FileText, MessageCircleQuestion, ArrowUpRight, ArrowRight, BookOpenCheck, Database, CalendarCheck2, ExternalLink } from "lucide-react";
+import {
+  FileText,
+  MessageCircleQuestion,
+  ArrowUpRight,
+  ArrowRight,
+  BookOpenCheck,
+  Database,
+  CalendarCheck2,
+  ExternalLink,
+} from "lucide-react";
 
 export const MainServices: React.FC = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <section id="main-services" ref={sectionRef} className="relative py-20 lg:py-28 overflow-hidden bg-[#F8FAFC]">
+    <section id="main-services" className="relative py-20 lg:py-28 overflow-hidden bg-[#F8FAFC]">
       {/* Background Subtle Ambience */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#044085]/20 to-transparent" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[450px] bg-[#005BAA]/5 rounded-full blur-[140px] pointer-events-none" />
@@ -26,14 +23,7 @@ export const MainServices: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div
-          className="max-w-3xl mb-12"
-          style={{
-            transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(24px)",
-          }}
-        >
+        <div className="max-w-3xl mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold text-[#044085] tracking-tight leading-tight">
             Layanan Utama & Ekosistem Digital
           </h2>
@@ -50,9 +40,6 @@ export const MainServices: React.FC = () => {
             className="lg:col-span-7 rounded-3xl p-8 sm:p-10 relative overflow-hidden flex flex-col justify-between shadow-xl group border border-slate-700/20"
             style={{
               background: "linear-gradient(135deg, #044085 0%, #022752 100%)",
-              transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(28px)",
             }}
           >
             {/* Ambient Background Graphic */}
@@ -101,14 +88,7 @@ export const MainServices: React.FC = () => {
           </div>
 
           {/* Bento 2: Konsultasi (Action Tile - 5 cols) */}
-          <div
-            className="lg:col-span-5 rounded-3xl p-8 sm:p-10 relative overflow-hidden flex flex-col justify-between shadow-xl group border border-amber-200/60 bg-white"
-            style={{
-              transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1) 120ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) 120ms",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(28px)",
-            }}
-          >
+          <div className="lg:col-span-5 rounded-3xl p-8 sm:p-10 relative overflow-hidden flex flex-col justify-between shadow-xl group border border-amber-200/60 bg-white">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#F7941D]" />
             <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#FFF7ED] rounded-full blur-xl pointer-events-none" />
 
@@ -152,14 +132,7 @@ export const MainServices: React.FC = () => {
           </div>
 
           {/* Bento 3: SIUKOM (6 cols) */}
-          <div
-            className="lg:col-span-6 rounded-3xl p-7 relative overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
-            style={{
-              transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1) 200ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) 200ms",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(28px)",
-            }}
-          >
+          <div className="lg:col-span-6 rounded-3xl p-7 relative overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#005BAA] shrink-0">
                 <BookOpenCheck className="w-6 h-6" />
@@ -190,14 +163,7 @@ export const MainServices: React.FC = () => {
           </div>
 
           {/* Bento 4: Portal Data JF (6 cols) */}
-          <div
-            className="lg:col-span-6 rounded-3xl p-7 relative overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
-            style={{
-              transition: "opacity 0.7s cubic-bezier(0.16,1,0.3,1) 260ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) 260ms",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(28px)",
-            }}
-          >
+          <div className="lg:col-span-6 rounded-3xl p-7 relative overflow-hidden bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-[#FFF7ED] border border-[#FFE4B0] flex items-center justify-center text-[#F7941D] shrink-0">
                 <Database className="w-6 h-6" />
@@ -232,4 +198,3 @@ export const MainServices: React.FC = () => {
     </section>
   );
 };
-

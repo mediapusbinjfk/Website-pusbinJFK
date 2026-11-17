@@ -3,20 +3,20 @@
 @layer base {
   :root {
     /* === BNPB Official Identity Colors (aligned with bnpb.go.id) === */
-    /* Primary Blue — rgb(4, 64, 133) from bnpb.go.id top bar */
+    /* Primary Blue: rgb(4, 64, 133) from bnpb.go.id top bar */
     --bnpb-blue:         #044085;
     --bnpb-blue-mid:     #005BAA;
     --bnpb-blue-dark:    #022d5c;
     --bnpb-blue-light:   #ddeeff;
     --bnpb-blue-pale:    #EFF6FF;
 
-    /* Accent Orange — BNPB brand accent */
+    /* Accent Orange: BNPB brand accent */
     --bnpb-orange:       #F7941D;
     --bnpb-orange-dark:  #d97c08;
     --bnpb-orange-light: #FFF7ED;
     --bnpb-orange-pale:  #fff3e0;
 
-    /* Danger Red — BNPB alert/emergency color */
+    /* Danger Red: BNPB alert/emergency color */
     --bnpb-red:          #C8102E;
     --bnpb-red-light:    #FEF2F2;
 
@@ -155,9 +155,25 @@
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+
+/* Hero entrance: items start hidden until animation runs */
+.hero-enter {
+  opacity: 0;
+  animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter {
+    opacity: 1;
+    animation: none;
+  }
+}
 
 /* === Scroll Reveal ===
-   Content is ALWAYS visible (opacity:1) by default — animation is
+   Content is ALWAYS visible (opacity:1) by default: animation is
    a progressive enhancement. JS adds .revealed to play entrance once.
    data-reveal="item" children use the same keyframe but start hidden
    until JS stagger-reveals them.
@@ -194,9 +210,12 @@
 [data-reveal="item"] {
   opacity: 0;
   transform: translateY(14px);
-  /* No transition — animation handles it */
+  /* No transition: animation handles it */
 }
-[data-reveal="item"].revealed {
+[data-reveal="item"].revealed,
+[data-reveal="section"].revealed [data-reveal="item"] {
+  opacity: 1;
+  transform: none;
   animation: sr-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -236,7 +255,7 @@
   }
 }
 
-/* === View Transitions API — Page Transitions ===
+/* === View Transitions API: Page Transitions ===
    These target the React <ViewTransition> component integrated with Next.js App Router.
    Default: subtle fade + 10px vertical slide, 350ms ease-in-out.
    Navbar is anchored via viewTransitionName="site-header" so it does not move.
@@ -288,7 +307,7 @@
   }
 }
 
-/* Anchor the navbar — it should never move during page transitions */
+/* Anchor the navbar: it should never move during page transitions */
 ::view-transition-group(site-header) {
   animation: none;
   z-index: 200;
@@ -479,5 +498,25 @@
   0%   { transform: translateY(0px) scale(1); }
   50%  { transform: translateY(-10px) scale(1.02); }
   100% { transform: translateY(0px) scale(1); }
+}
+
+/* === Accordion Animation (CSS grid trick: smooth height expand/collapse) === */
+.accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-body.is-open {
+  grid-template-rows: 1fr;
+}
+.accordion-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accordion-body {
+    transition: none;
+  }
 }
 

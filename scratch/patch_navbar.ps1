@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
           <div className={cn("flex items-center gap-5", isTransparent ? "text-white/80" : "text-blue-100")}>
             <span className="flex items-center gap-1.5 hover:text-white transition-colors cursor-default">
               <Phone className="w-3 h-3 text-[#F7941D]" />
-              <span>(021) 2982 7793</span>
+              <span>085111380175</span>
             </span>
             <span className="flex items-center gap-1.5 hover:text-white transition-colors cursor-default">
               <Mail className="w-3 h-3 text-[#F7941D]" />
@@ -365,7 +365,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSearch }) => {
             <div className="p-4 border-t border-slate-100 bg-slate-50">
               <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
                 <Phone className="w-3.5 h-3.5 text-[#F7941D]" />
-                <span>(021) 2982 7793</span>
+                <span>085111380175</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 <Mail className="w-3.5 h-3.5 text-[#F7941D]" />

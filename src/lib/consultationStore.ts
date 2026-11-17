@@ -5,10 +5,10 @@ import {
   sendCancelEmailNotification,
 } from "@/services/email";
 
-// Key for LocalStorage
+// Key for LocalStorage (v3: clean real data without dummy entries)
 const STORAGE_KEYS = {
-  CONSULTATIONS: "jf_bnpb_consultations",
-  SCHEDULES: "jf_bnpb_schedules",
+  CONSULTATIONS: "jf_bnpb_consultations_v3",
+  SCHEDULES: "jf_bnpb_schedules_v3",
 };
 
 // Helper: Sync directly to Google Calendar in background
@@ -40,6 +40,11 @@ function syncToGoogleCalendarBackground(payload: {
 }
 
 function getSeedData(): { consultations: Consultation[]; schedules: ConsultationSchedule[] } {
+  // Data dummy dibersihkan; siap menerima pengajuan konsultasi riil dari website
+  return {
+    consultations: [],
+    schedules: [],
+  };
   const today = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");
   const formatDate = (offsetDays: number) => {

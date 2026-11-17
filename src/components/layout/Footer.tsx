@@ -83,7 +83,7 @@ export const Footer: React.FC = () => {
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link href="/layanan/produk-hukum" className="text-slate-400 hover:text-[#F7941D] transition-colors">
-                    Produk Hukum (contoh/on progress)
+                    Produk Hukum
                   </Link>
                 </li>
                 <li>
@@ -126,7 +126,7 @@ export const Footer: React.FC = () => {
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link href="/informasi-publik/dokumentasi-kegiatan" className="text-slate-400 hover:text-[#F7941D] transition-colors">
-                    Dokumentasi Kegiatan (contoh/on progress)
+                    Publikasi
                   </Link>
                 </li>
               </ul>
@@ -147,7 +147,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-[#F7941D] shrink-0" />
-                <span>(021) 2982 7793 / 117</span>
+                <span>085111380175 / 117</span>
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-[#F7941D] shrink-0 mt-1" />
@@ -159,14 +159,21 @@ export const Footer: React.FC = () => {
             </ul>
 
             <div className="pt-6">
+              <p className="text-xs text-slate-500 mb-2">Media Sosial</p>
               <div className="flex flex-wrap gap-2">
-                {["Instagram", "YouTube", "Twitter"].map((social) => (
+                {[
+                  { label: "Instagram", href: "https://www.instagram.com/bnpb_indonesia/" },
+                  { label: "YouTube", href: "https://www.youtube.com/@BNPBIndonesia" },
+                  { label: "X / Twitter", href: "https://twitter.com/BNPB_Indonesia" },
+                ].map((social) => (
                   <a
-                    key={social}
-                    href="#"
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="px-3 py-1.5 text-xs rounded-md bg-slate-800 text-slate-300 border border-slate-700 hover:border-[#F7941D] hover:text-[#F7941D] transition-all"
                   >
-                    {social}
+                    {social.label}
                   </a>
                 ))}
               </div>
@@ -179,11 +186,10 @@ export const Footer: React.FC = () => {
       <div className="bg-[#07152a] py-5 px-4 border-t border-white/10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>
-            © 2026 {unitProfileData.unitShortName}
+            &copy; {new Date().getFullYear()} {unitProfileData.unitShortName}. Hak cipta dilindungi undang-undang.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="#" className="hover:text-slate-300 transition-colors">Hak Cipta</Link>
-            <Link href="#" className="hover:text-slate-300 transition-colors">Kebijakan Privasi</Link>
+            <Link href="/kebijakan-privasi" className="hover:text-slate-300 transition-colors">Kebijakan Privasi</Link>
           </div>
         </div>
       </div>

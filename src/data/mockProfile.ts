@@ -71,8 +71,8 @@ export const unitProfileData = {
     },
     {
       no: "5",
-      title: "Peraturan BNPB [Nomor/Tahun Mock]",
-      about: "Tentang Petunjuk Teknis Pembinaan dan Penilaian Kinerja Jabatan Fungsional Kebencanaan"
+      title: "Peraturan Badan Nasional Penanggulangan Bencana Nomor 4 Tahun 2020",
+      about: "Tentang Petunjuk Teknis Pembinaan dan Pengelolaan Jabatan Fungsional Kebencanaan"
     }
   ],
   ruangLingkup: [

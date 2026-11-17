@@ -11,26 +11,11 @@ export default function HomePage() {
   const revealRef = useScrollReveal();
 
   return (
-    <div className="w-full page-transition relative" ref={revealRef}>
-      {/* Hero — always visible */}
+    <div className="w-full" ref={revealRef}>
       <Hero />
-
-
-      {/* About & Mandate Feature */}
-      <div data-reveal="section" className="scroll-reveal delay-1">
-        <AboutPreview />
-      </div>
-
-      {/* Interactive Milestone Timeline */}
-      <div data-reveal="section" className="scroll-reveal delay-1">
-        <SejarahPreview />
-      </div>
-
-      {/* Documentation & Field Gallery */}
-      <div data-reveal="section" className="scroll-reveal delay-2">
-        <DocumentationPreview />
-      </div>
-
+      <AboutPreview />
+      <SejarahPreview />
+      <DocumentationPreview />
       <ScrollProgressWidget />
     </div>
   );

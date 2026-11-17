@@ -7,20 +7,14 @@ import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
-  Search,
   ChevronDown,
   Phone,
   Mail,
-  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { unitProfileData } from "@/data/mockProfile";
 
-interface NavbarProps {
-  // onOpenSearch: () => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = () => {
+export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -57,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
         { label: "Tentang Unit", href: "/profil/tentang-unit", desc: "Informasi umum & kedudukan" },
         { label: "Tugas & Fungsi", href: "/profil/tugas-fungsi", desc: "Tugas pokok & fungsi organisasi" },
         { label: "Struktur Organisasi", href: "/profil/struktur-organisasi", desc: "Bagan hierarki kelembagaan" },
+        { label: "Dasar Hukum", href: "/profil/dasar-hukum", desc: "Landasan regulasi kelembagaan" },
       ],
     },
     {
@@ -71,19 +66,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
           href: "https://script.google.com/macros/s/AKfycbz129kVvvjvr82HjulfmHsOv6crXkNeuEDoUKRo6jIa2qy8L-f9xtEsnTSEQsClAXI0/exec",
           desc: "Portal Data Jabatan Fungsional Kebencanaan"
         },
-        {
-          label: "SRIKANDI",
-          href: "https://srikandi.arsip.go.id/auth/login",
-          desc: "Sistem Informasi Kearsipan Dinamis Terintegrasi"
-        },
       ],
     },
     {
       label: "Informasi Publik",
       href: "/layanan/produk-hukum",
       children: [
-        { label: "Produk Hukum (contoh/on progress)", href: "/layanan/produk-hukum", desc: "Peraturan & Ketentuan (contoh/on progress)" },
-        { label: "Dokumentasi Kegiatan (contoh/on progress)", href: "/informasi-publik/dokumentasi-kegiatan", desc: "Galeri & liputan acara (contoh/on progress)" },
+        { label: "Produk Hukum", href: "/layanan/produk-hukum", desc: "Peraturan & Ketentuan resmi" },
+        { label: "Publikasi", href: "/informasi-publik/dokumentasi-kegiatan", desc: "Galeri & liputan acara resmi" },
       ],
     },
   ];
@@ -120,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
           <div className={cn("flex items-center gap-5", isTransparent ? "text-white/80" : "text-blue-100")}>
             <span className="flex items-center gap-1.5 hover:text-white transition-colors cursor-default">
               <Phone className="w-3 h-3 text-[#F7941D]" />
-              <span>(021) 2982 7793</span>
+              <span>085111380175</span>
             </span>
             <span className="flex items-center gap-1.5 hover:text-white transition-colors cursor-default">
               <Mail className="w-3 h-3 text-[#F7941D]" />
@@ -202,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
                     {/* DROPDOWN */}
                     {hasDropdown && (
-                      <div className="absolute left-0 top-full pt-4 w-64 transition-all duration-200 origin-top opacity-0 scale-y-95 invisible group-hover:opacity-100 group-hover:scale-y-100 group-hover:visible">
+                      <div className="absolute left-0 top-full pt-4 w-64 transition-all duration-200 origin-top opacity-0 scale-y-95 pointer-events-none group-hover:opacity-100 group-hover:scale-y-100 group-hover:pointer-events-auto">
                         <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-2 space-y-0.5">
                           {link.children?.map((sub) => {
                             const isExternal = sub.href.startsWith("http");
@@ -212,9 +202,9 @@ export const Navbar: React.FC<NavbarProps> = () => {
                                 href={sub.href}
                                 target={isExternal ? "_blank" : undefined}
                                 rel={isExternal ? "noopener noreferrer" : undefined}
-                                className="block p-3 rounded-lg hover:bg-slate-50 transition-colors group/sub"
+                                className="block p-3 rounded-lg hover:bg-slate-50 transition-colors duration-150 group/sub"
                               >
-                                <div className="text-sm font-semibold text-slate-800 group-hover/sub:text-[#005BAA] transition-colors">
+                                <div className="text-sm font-semibold text-slate-800 group-hover/sub:text-[#005BAA] transition-colors duration-150">
                                   {sub.label}
                                 </div>
                                 {sub.desc && (
@@ -256,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
         <div className="fixed inset-0 z-40 lg:hidden">
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
             onClick={() => setIsOpen(false)}
           />
 
@@ -357,7 +347,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <div className="p-4 border-t border-slate-100 bg-slate-50">
               <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
                 <Phone className="w-3.5 h-3.5 text-[#F7941D]" />
-                <span>(021) 2982 7793</span>
+                <span>085111380175</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 <Mail className="w-3.5 h-3.5 text-[#F7941D]" />

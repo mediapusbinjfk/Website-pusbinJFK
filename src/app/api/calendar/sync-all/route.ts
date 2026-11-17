@@ -1,9 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { syncScheduleToGoogle, type SyncSchedulePayload } from "@/lib/googleCalendar";
+import { verifyAdminSession } from "@/lib/auth";
 
-// POST /api/calendar/sync-all
-export async function POST(request: Request) {
+// POST /api/calendar/sync-all (Admin only)
+export async function POST(request: NextRequest) {
   try {
+    const session = verifyAdminSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, message: "Akses ditolak: Autentikasi sesi admin diperlukan." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const schedules: SyncSchedulePayload[] = body.schedules || [];
 
@@ -14,8 +23,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // Limit batch sync to max 100 items per request
+    const boundedSchedules = schedules.slice(0, 100);
+
     const results = [];
-    for (const schedule of schedules) {
+    for (const schedule of boundedSchedules) {
       const res = await syncScheduleToGoogle(schedule);
       results.push({ scheduleId: schedule.scheduleId, ...res });
     }
@@ -31,7 +43,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[POST /api/calendar/sync-all] Error:", error);
     return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan saat menyinkronkan semua jadwal." },
+      { success: false, message: "Terjadi kesalahan saat menyinkronkan jadwal." },
       { status: 500 }
     );
   }

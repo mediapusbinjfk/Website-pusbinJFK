@@ -1,163 +1,226 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Lock,
+  User,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  AlertCircle
+} from "lucide-react";
 
 export function AdminLoginPage() {
   const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Jika sudah login sebelumnya, langsung arahkan ke /admin
+  useEffect(() => {
+    try {
+      const savedAuth = localStorage.getItem("jf_admin_auth");
+      if (savedAuth) {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed?.isAuthenticated) {
+          router.push("/admin");
+        }
+      }
+    } catch {
+      // ignore parse error
+    }
+  }, [router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
-    // Simulate authentication delay
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Dummy validation for demonstration
-      if (email === "admin@bnpb.go.id" && password === "admin123") {
-        router.push("/admin/konsultasi/pengajuan");
-      } else {
-        setError("Email atau password yang Anda masukkan salah.");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          rememberMe,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Username atau password salah. Silakan coba lagi.");
+        setIsLoading(false);
+        return;
       }
-    }, 1500);
+
+      // Simpan metadata non-sensitif untuk UI display di browser
+      const authData = {
+        isAuthenticated: true,
+        username: data.user?.username || "admin",
+        displayName: data.user?.displayName || "Administrator JF",
+        role: data.user?.role || "Super Admin",
+        loginAt: new Date().toISOString(),
+        rememberMe,
+      };
+
+      localStorage.setItem("jf_admin_auth", JSON.stringify(authData));
+      router.push("/admin");
+    } catch {
+      setError("Gagal terhubung ke server autentikasi. Silakan periksa koneksi Anda.");
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-      <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-cyan-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-4 sm:p-6 text-slate-800">
+      {/* Top back link */}
+      <div className="w-full max-w-md mx-auto pt-4 flex justify-between items-center text-xs">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#005BAA] font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Kembali ke Website</span>
+        </Link>
+        <span className="text-slate-400">Portal Admin JF BNPB</span>
+      </div>
 
-      <div className="relative z-10 w-full max-w-md p-8">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 p-10 transform transition-all duration-500 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]">
-          {/* Header Section */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/30 mb-6 transform transition-transform hover:scale-110 duration-300">
-              <ShieldCheck size={32} strokeWidth={1.5} />
+      {/* Centered Login Card */}
+      <div className="w-full max-w-md mx-auto my-auto">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+          
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <div className="w-14 h-14 mx-auto flex items-center justify-center">
+              <Image
+                src="/images/logo-badan-nasional-penanggulangan-bencana.png.png"
+                alt="Logo BNPB"
+                width={56}
+                height={56}
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 mb-2">
-              Admin Portal
-            </h1>
-            <p className="text-slate-500 text-sm">
-              Masuk untuk mengelola Jabatan Fungsional BNPB
-            </p>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                Login Administrator
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Pusat Pembinaan Jabatan Fungsional BNPB
+              </p>
+            </div>
           </div>
 
-          {/* Form Section */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm text-center border border-red-100">
-                {error}
-              </div>
-            )}
-            <div className="space-y-1 group">
-              <label className="text-sm font-medium text-slate-700 ml-1">
-                Email
+          {/* Error Message */}
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Username */}
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-700">
+                Username atau Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  <Mail size={18} />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <User className="w-4 h-4" />
                 </div>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
-                  placeholder="admin@bnpb.go.id"
+                  type="text"
                   required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Masukkan username atau email"
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-[#005BAA] focus:ring-2 focus:ring-[#005BAA]/15 transition-all"
+                  autoComplete="username"
                 />
               </div>
             </div>
 
-            <div className="space-y-1 group">
-              <label className="text-sm font-medium text-slate-700 ml-1">
+            {/* Password */}
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-700">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  <Lock size={18} />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="w-4 h-4" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
                   placeholder="••••••••"
-                  required
+                  className="w-full pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:border-[#005BAA] focus:ring-2 focus:ring-[#005BAA]/15 transition-all"
+                  autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-2">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 transition-all" />
-                <span className="text-sm text-slate-600">Ingat saya</span>
+            {/* Remember Me */}
+            <div className="flex items-center text-xs pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-slate-300 text-[#005BAA] focus:ring-[#005BAA]"
+                />
+                <span>Ingat saya di perangkat ini</span>
               </label>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                Lupa Password?
-              </a>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full relative flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-70 disabled:cursor-not-allowed group overflow-hidden"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#005BAA] hover:bg-[#044085] text-white font-bold text-sm shadow-sm transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Memproses...</span>
               ) : (
                 <>
-                  <span className="relative z-10">Masuk ke Dashboard</span>
-                  <ArrowRight size={18} className="relative z-10 transform group-hover:translate-x-1 transition-transform duration-300" />
-                  
-                  {/* Hover shine effect */}
-                  <div className="absolute top-0 -inset-full h-full w-1/2 z-0 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
+                  <span>Masuk</span>
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-8 text-center border-t border-slate-100 pt-6">
-            <p className="text-xs text-slate-500">
-              © {new Date().getFullYear()} Badan Nasional Penanggulangan Bencana
-            </p>
-          </div>
         </div>
       </div>
-      
-      {/* Global styles for custom animations in this page */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes shine {
-          100% { left: 125%; }
-        }
-        .animate-shine {
-          animation: shine 1.5s;
-        }
-      `}} />
+
+      {/* Footer */}
+      <div className="w-full max-w-md mx-auto pb-4 text-center text-slate-400 text-[11px]">
+        &copy; {new Date().getFullYear()} BNPB Indonesia
+      </div>
     </div>
   );
 }

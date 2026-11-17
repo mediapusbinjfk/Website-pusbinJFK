@@ -72,12 +72,12 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
       <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-slate-200 bg-slate-50/50">
-          <Search className="w-5 h-5 text-[#C8102E] shrink-0 mr-3" />
+          <Search className="w-5 h-5 text-[#005BAA] shrink-0 mr-3" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari berita, SOP, nama personel, program, atau kegiatan..."
+            placeholder="Cari regulasi, layanan konsultasi, SOP, publikasi, atau menu portal..."
             autoFocus
             className="w-full bg-transparent border-none text-slate-800 placeholder-slate-400 text-sm sm:text-base focus:outline-none"
           />

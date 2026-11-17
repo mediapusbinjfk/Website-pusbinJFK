@@ -64,14 +64,41 @@ export default function AdminProdukHukumBaruPage() {
       setFileError("File PDF wajib diunggah.");
       return;
     }
+    if (!form.title.trim()) {
+      alert("Judul dokumen wajib diisi.");
+      return;
+    }
+    if (!form.type) {
+      alert("Tipe produk hukum wajib dipilih.");
+      return;
+    }
+
     setSaving(true);
     try {
-      // TODO: Upload PDF ke Google Drive, simpan metadata ke Google Sheets
-      await new Promise((r) => setTimeout(r, 1500));
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("title", form.title);
+      formData.append("documentNumber", form.documentNumber || "");
+      formData.append("type", form.type);
+      formData.append("year", String(form.year));
+      formData.append("documentDate", form.documentDate || "");
+      formData.append("description", form.description || "");
+      formData.append("status", form.status);
+
+      const res = await fetch("/api/admin/produk-hukum", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || "Gagal menyimpan produk hukum.");
+      }
+
       setSaved(true);
       setTimeout(() => router.push("/admin/produk-hukum"), 1500);
-    } catch {
-      alert("Terjadi kesalahan saat menyimpan.");
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat menyimpan.");
     } finally {
       setSaving(false);
     }

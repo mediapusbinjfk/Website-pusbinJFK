@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Scale, FileText } from "lucide-react";
@@ -51,10 +52,13 @@ export default function DasarHukumPage() {
                     </div>
                   </div>
 
-                  <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-[#005BAA] text-slate-700 hover:text-[#005BAA] text-sm font-semibold rounded-lg transition-all duration-200 shrink-0 whitespace-nowrap">
+                  <Link
+                    href={`/layanan/produk-hukum?search=${encodeURIComponent(item.title.split(" tentang ")[0])}`}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-[#005BAA] text-slate-700 hover:text-[#005BAA] text-sm font-semibold rounded-lg transition-all duration-200 shrink-0 whitespace-nowrap"
+                  >
                     <FileText className="w-4 h-4" />
                     Lihat Dokumen
-                  </button>
+                  </Link>
                 </div>
               ))}
             </div>

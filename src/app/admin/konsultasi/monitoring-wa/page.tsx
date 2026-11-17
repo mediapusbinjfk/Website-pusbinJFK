@@ -169,6 +169,18 @@ const QUICK_TEMPLATES = [
   },
 ];
 
+function createAdminMessage(text: string): MessageItem {
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+  return {
+    id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    sender: "admin",
+    text,
+    time: timeStr,
+    status: "delivered",
+  };
+}
+
 export default function MonitoringWhatsAppChatPage() {
   const [conversations, setConversations] = useState<ChatConversation[]>(INITIAL_CONVERSATIONS);
   const [selectedChatId, setSelectedChatId] = useState<string>("CHAT-001");
@@ -192,16 +204,7 @@ export default function MonitoringWhatsAppChatPage() {
     const text = (textToSend || inputText).trim();
     if (!text || !activeChat) return;
 
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-    const newMsg: MessageItem = {
-      id: `msg-${Date.now()}`,
-      sender: "admin",
-      text,
-      time: timeStr,
-      status: "delivered",
-    };
+    const newMsg = createAdminMessage(text);
 
     setConversations((prev) =>
       prev.map((c) => {

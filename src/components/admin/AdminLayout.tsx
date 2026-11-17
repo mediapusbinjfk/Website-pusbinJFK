@@ -91,7 +91,7 @@ const menuGroups: MenuGroup[] = [
     groupLabel: "Konten Publikasi",
     items: [
       {
-        label: "Dokumentasi Kegiatan",
+        label: "Publikasi",
         icon: <ImageIcon className="w-4 h-4" />,
         href: "/admin/dokumentasi",
       },
@@ -103,27 +103,12 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    groupLabel: "Tata Usaha & Dokumen",
-    items: [
-      {
-        label: "Surat Dinas",
-        icon: <FolderOpen className="w-4 h-4" />,
-        href: "/admin/dokumen/surat-dinas",
-      },
-    ],
-  },
-  {
     groupLabel: "Konfigurasi & Log",
     items: [
       {
         label: "Kategori",
         icon: <Tag className="w-4 h-4" />,
         href: "/admin/pengaturan/kategori",
-      },
-      {
-        label: "Template WhatsApp",
-        icon: <MessageSquare className="w-4 h-4" />,
-        href: "/admin/pengaturan/template-wa",
       },
       {
         label: "Pengaturan Sistem",
@@ -370,15 +355,13 @@ export function AdminSidebar({
 function getBreadcrumbs(pathname: string): { group: string; title: string } {
   const map: Record<string, { group: string; title: string }> = {
     "/admin": { group: "Utama", title: "Dashboard Command Center" },
-    "/admin/dokumentasi": { group: "Konten Publikasi", title: "Dokumentasi Kegiatan" },
+    "/admin/dokumentasi": { group: "Konten Publikasi", title: "Publikasi" },
     "/admin/produk-hukum": { group: "Konten Publikasi", title: "Produk Hukum & Regulasi" },
     "/admin/konsultasi/jadwal": { group: "Layanan Konsultasi", title: "Jadwal Konsultasi" },
     "/admin/konsultasi/pengajuan": { group: "Layanan Konsultasi", title: "Pengajuan Konsultasi" },
     "/admin/konsultasi/monitoring-wa": { group: "Layanan Konsultasi", title: "Monitoring Notifikasi WhatsApp" },
     "/admin/konsultasi/riwayat": { group: "Layanan Konsultasi", title: "Riwayat Konsultasi" },
-    "/admin/dokumen/surat-dinas": { group: "Tata Usaha", title: "Surat Dinas & Dokumen" },
     "/admin/pengaturan/kategori": { group: "Pengaturan", title: "Kategori Layanan" },
-    "/admin/pengaturan/template-wa": { group: "Pengaturan", title: "Template Pesan WhatsApp" },
     "/admin/pengaturan/sistem": { group: "Pengaturan", title: "Pengaturan Sistem" },
     "/admin/aktivitas": { group: "Sistem", title: "Log Aktivitas Admin" },
   };
@@ -415,8 +398,21 @@ export function AdminTopbar({ onMenuToggle }: { onMenuToggle: () => void }) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = () => {
-    router.push("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore network error
+    }
+    try {
+      localStorage.removeItem("jf_admin_auth");
+      sessionStorage.removeItem("jf_admin_auth");
+      sessionStorage.removeItem("jf_gate_unlocked");
+    } catch {
+      // ignore
+    }
+    const secretKey = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || "bnpb2026";
+    router.push(`/admin/login?key=${secretKey}`);
   };
 
   return (
@@ -506,8 +502,35 @@ export function AdminTopbar({ onMenuToggle }: { onMenuToggle: () => void }) {
 // MAIN ADMIN LAYOUT
 // ============================================================
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    try {
+      const auth = localStorage.getItem("jf_admin_auth");
+      if (!auth) {
+        // Jika tidak memiliki sesi login, lempar ke beranda utama
+        router.push("/");
+      } else {
+        setIsCheckingAuth(false);
+      }
+    } catch {
+      router.push("/");
+    }
+  }, [router]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#005BAA]/20 border-t-[#005BAA] rounded-full animate-spin" />
+          <p className="text-xs font-bold text-slate-500">Memeriksa hak akses admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden antialiased">

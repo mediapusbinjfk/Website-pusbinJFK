@@ -2,64 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { ArrowLeft, FileText, Download, Edit2, Calendar } from "lucide-react";
+import { ArrowLeft, FileText, Download, Edit2, Calendar, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { LegalProductType, LegalProductStatus } from "@/types/admin";
 
-// MOCK DATA
-const mockProducts = [
-  {
-    id: "PH-001",
-    title: "Peraturan Menteri PANRB Nomor 43 Tahun 2018 Tentang Jabatan Fungsional Penata Penanggulangan Bencana",
-    documentNumber: "PermenPAN-RB 43/2018",
-    type: "Peraturan" as LegalProductType,
-    year: 2018,
-    fileSize: "2.4 MB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-10",
-  },
-  {
-    id: "PH-002",
-    title: "Peraturan BNPB Nomor 4 Tahun 2019 Tentang Petunjuk Pelaksanaan Jabatan Fungsional",
-    documentNumber: "Perkepala BNPB 4/2019",
-    type: "Peraturan" as LegalProductType,
-    year: 2019,
-    fileSize: "1.8 MB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-10",
-  },
-  {
-    id: "PH-003",
-    title: "Keputusan Kepala BNPB Nomor 12A Tahun 2023 Tentang Penilaian Angka Kredit",
-    documentNumber: "Kepka BNPB 12A/2023",
-    type: "Keputusan" as LegalProductType,
-    year: 2023,
-    fileSize: "980 KB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-01-15",
-  },
-  {
-    id: "PH-004",
-    title: "Surat Edaran Nomor: SE/01/BNPB/2024 Perihal Pembinaan dan Pengembangan Karier JF",
-    documentNumber: "SE/01/BNPB/2024",
-    type: "Surat Edaran" as LegalProductType,
-    year: 2024,
-    fileSize: "450 KB",
-    status: "published" as LegalProductStatus,
-    createdAt: "2026-02-20",
-  },
-  {
-    id: "PH-005",
-    title: "Pedoman Teknis Pelaksanaan Uji Kompetensi Kenaikan Jenjang 2026",
-    documentNumber: "PED-JF-01/2026",
-    type: "Pedoman" as LegalProductType,
-    year: 2026,
-    fileSize: "3.2 MB",
-    status: "draft" as LegalProductStatus,
-    createdAt: "2026-08-01",
-  },
-];
+export interface LegalProductItem {
+  id: string;
+  title: string;
+  documentNumber?: string | null;
+  type: LegalProductType;
+  year: number;
+  documentDate?: string | null;
+  description?: string | null;
+  fileSize?: string | null;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  status: LegalProductStatus;
+  createdAt: string;
+}
 
 const STATUS_CONFIG: Record<LegalProductStatus, { label: string; className: string }> = {
   published: { label: "Dipublikasikan", className: "bg-green-100 text-green-700" },
@@ -81,22 +42,64 @@ const TYPE_COLORS: Record<LegalProductType, string> = {
 export default function DetailProdukHukumPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = React.use(paramsPromise);
   const router = useRouter();
-  const [doc, setDoc] = useState<typeof mockProducts[0] | null>(null);
-  
+  const [doc, setDoc] = useState<LegalProductItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const found = mockProducts.find((d) => d.id === params.id) || mockProducts[0];
-    if (found) setDoc(found);
+    async function fetchDetail() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/admin/produk-hukum/${params.id}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setDoc({
+            ...json.data,
+            createdAt: new Date(json.data.createdAt).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+          });
+        }
+      } catch (err) {
+        console.error("Gagal memuat detail produk hukum:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDetail();
   }, [params.id]);
 
-  if (!doc) {
+  if (loading) {
     return (
       <AdminLayout>
-        <div className="p-8 text-center text-slate-500">Memuat data produk hukum...</div>
+        <div className="max-w-4xl mx-auto py-20 text-center space-y-3">
+          <Loader2 className="w-10 h-10 mx-auto text-[#005BAA] animate-spin" />
+          <p className="text-sm text-slate-500">Memuat detail produk hukum dari Supabase...</p>
+        </div>
       </AdminLayout>
     );
   }
 
-  const statusCfg = STATUS_CONFIG[doc.status];
+  if (!doc) {
+    return (
+      <AdminLayout>
+        <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
+          <FileText className="w-12 h-12 mx-auto text-slate-300" />
+          <h2 className="text-lg font-bold text-slate-700">Produk Hukum Tidak Ditemukan</h2>
+          <p className="text-sm text-slate-500">Data produk hukum dengan ID tersebut belum tersedia atau telah dihapus di Supabase.</p>
+          <Link
+            href="/admin/produk-hukum"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#005BAA] text-white text-sm font-semibold rounded-xl hover:bg-[#004B8C] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Produk Hukum
+          </Link>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const statusCfg = STATUS_CONFIG[doc.status] || STATUS_CONFIG.published;
   const typeCfg = TYPE_COLORS[doc.type] ?? "bg-slate-100 text-slate-600";
 
   return (
@@ -144,7 +147,12 @@ export default function DetailProdukHukumPage({ params: paramsPromise }: { param
               {doc.type}
             </span>
             <h2 className="text-xl font-bold text-slate-900">{doc.title}</h2>
-            <p className="text-sm font-mono text-slate-500 mt-2">{doc.documentNumber}</p>
+            {doc.documentNumber && (
+              <p className="text-sm font-mono text-slate-500 mt-2">Nomor: {doc.documentNumber}</p>
+            )}
+            {doc.description && (
+              <p className="text-sm text-slate-600 mt-3 leading-relaxed">{doc.description}</p>
+            )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -163,26 +171,33 @@ export default function DetailProdukHukumPage({ params: paramsPromise }: { param
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-0.5">Ukuran File</p>
-                <p className="text-sm font-semibold text-slate-800">{doc.fileSize}</p>
+                <p className="text-sm font-semibold text-slate-800">{doc.fileSize || "-"}</p>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
-                <FileText className="w-6 h-6" />
+          {doc.fileUrl && (
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{doc.fileName || `${doc.title}.pdf`}</p>
+                  <p className="text-xs text-slate-400">Dokumen PDF • {doc.fileSize || "-"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">{doc.documentNumber}.pdf</p>
-                <p className="text-xs text-slate-400">Dokumen PDF • {doc.fileSize}</p>
-              </div>
+              <a
+                href={doc.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#005BAA] hover:bg-[#003F7D] text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                Buka / Unduh File
+              </a>
             </div>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-[#005BAA] hover:bg-[#003F7D] text-white text-sm font-semibold rounded-xl transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              Unduh File
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </AdminLayout>
